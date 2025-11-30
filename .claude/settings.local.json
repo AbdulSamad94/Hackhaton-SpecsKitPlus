@@ -3,7 +3,16 @@
     "allow": [
       "Bash(git --version)",
       "Bash(git rev-parse:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(git fetch:*)",
+      "Bash(npm start)",
+      "Bash(npm run build)",
+      "Bash(npm run serve)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(taskkill:*)",
+      "Bash(powershell:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []
