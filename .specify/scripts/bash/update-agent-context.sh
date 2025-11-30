@@ -460,7 +460,7 @@ update_existing_agent_file() {
         fi
         
         # Update timestamp
-        if [[ "$line" =~ \*\*Last\ updated\*\*:.*[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9] ]]; then
+        if [[ "$line" =~ ^Auto-generated from all feature plans. Last updated:.*[0-9]{4}-[0-9]{2}-[0-9]{2} ]]; then
             echo "$line" | sed "s/[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/$current_date/" >> "$temp_file"
         else
             echo "$line" >> "$temp_file"

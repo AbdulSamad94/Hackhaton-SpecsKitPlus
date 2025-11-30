@@ -35,14 +35,15 @@ Act as a senior software architect with expertise in:
 ## OUTPUT STRUCTURE (with quick flywheel hooks)
 
 Execute this workflow in 6 sequential steps. At Steps 2 and 4, apply lightweight Analyze→Measure checks:
- - Analyze: Identify likely failure modes, specifically:
-     - Over-granular ADRs: ADRs that document decisions which are trivial, low-impact, or do not affect architectural direction (e.g., naming conventions, minor refactorings).
-     - Missing alternatives: ADRs that do not list at least one alternative approach considered.
- - Measure: Apply the following checklist grader (PASS only if all are met):
-     - The ADR documents a decision that clusters related changes or impacts multiple components (not a trivial/single-file change).
-     - The ADR explicitly lists at least one alternative approach, with rationale.
-     - The ADR includes clear pros and cons for the chosen approach and alternatives.
-     - The ADR is concise but sufficiently detailed for future reference.
+
+- Analyze: Identify likely failure modes, specifically:
+  - Over-granular ADRs: ADRs that document decisions which are trivial, low-impact, or do not affect architectural direction (e.g., naming conventions, minor refactorings).
+  - Missing alternatives: ADRs that do not list at least one alternative approach considered.
+- Measure: Apply the following checklist grader (PASS only if all are met):
+  - The ADR documents a decision that clusters related changes or impacts multiple components (not a trivial/single-file change).
+  - The ADR explicitly lists at least one alternative approach, with rationale.
+  - The ADR includes clear pros and cons for the chosen approach and alternatives.
+  - The ADR is concise but sufficiently detailed for future reference.
 
 ## Step 1: Load Planning Context
 
@@ -184,24 +185,26 @@ Be thorough, analytical, and decision-focused. Emphasize the "why" behind each d
 
 As the main request completes, you MUST create and complete a PHR (Prompt History Record) using agent‑native tools when possible.
 
-1) Determine Stage
+1. Determine Stage
+
    - Stage: constitution | spec | plan | tasks | red | green | refactor | explainer | misc | general
 
-2) Generate Title and Determine Routing:
+2. Generate Title and Determine Routing:
+
    - Generate Title: 3–7 words (slug for filename)
    - Route is automatically determined by stage:
      - `constitution` → `history/prompts/constitution/`
      - Feature stages → `history/prompts/<feature-name>/` (spec, plan, tasks, red, green, refactor, explainer, misc)
      - `general` → `history/prompts/general/`
 
-3) Create and Fill PHR (Shell first; fallback agent‑native)
+3. Create and Fill PHR (Shell first; fallback agent‑native)
+
    - Run: `.specify/scripts/bash/create-phr.sh --title "<title>" --stage <stage> [--feature <name>] --json`
    - Open the file and fill remaining placeholders (YAML + body), embedding full PROMPT_TEXT (verbatim) and concise RESPONSE_TEXT.
-   - If the script fails:
-     - Read `.specify/templates/phr-template.prompt.md` (or `templates/…`)
+   - Read `.specify/templates/phr-template.prompt.md` (or `templates/phr-template.prompt.md` at the repository root) - Read `.specify/templates/phr-template.prompt.md` (or `templates/…`)
      - Allocate an ID; compute the output path based on stage from step 2; write the file
      - Fill placeholders and embed full PROMPT_TEXT and concise RESPONSE_TEXT
 
-4) Validate + report
+4. Validate + report
    - No unresolved placeholders; path under `history/prompts/` and matches stage; stage/title/date coherent; print ID + path + stage + title.
    - On failure: warn, don't block. Skip only for `/sp.phr`.

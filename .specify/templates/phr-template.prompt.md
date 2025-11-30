@@ -1,4 +1,4 @@
----
+---[]
 id: {{ID}}
 title: {{TITLE}}
 stage: {{STAGE}}

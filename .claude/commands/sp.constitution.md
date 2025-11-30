@@ -17,10 +17,12 @@ You are updating the project constitution at `.specify/memory/constitution.md`. 
 Follow this execution flow:
 
 1. Load the existing constitution template at `.specify/memory/constitution.md`.
+
    - Identify every placeholder token of the form `[ALL_CAPS_IDENTIFIER]`.
-   **IMPORTANT**: The user might require less or more principles than the ones used in the template. If a number is specified, respect that - follow the general template. You will update the doc accordingly.
+     **IMPORTANT**: The user might require less or more principles than the ones used in the template. If a number is specified, respect that - follow the general template. You will update the doc accordingly.
 
 2. Collect/derive values for placeholders:
+
    - If user input (conversation) supplies a value, use it.
    - Otherwise infer from existing repo context (README, docs, prior constitution versions if embedded).
    - For governance dates: `RATIFICATION_DATE` is the original adoption date (if unknown ask or mark TODO), `LAST_AMENDED_DATE` is today if changes are made, otherwise keep previous.
@@ -31,19 +33,23 @@ Follow this execution flow:
    - If version bump type ambiguous, propose reasoning before finalizing.
 
 3. Draft the updated constitution content:
+
    - Replace every placeholder with concrete text (no bracketed tokens left except intentionally retained template slots that the project has chosen not to define yet—explicitly justify any left).
    - Preserve heading hierarchy and comments can be removed once replaced unless they still add clarifying guidance.
    - Ensure each Principle section: succinct name line, paragraph (or bullet list) capturing non‑negotiable rules, explicit rationale if not obvious.
    - Ensure Governance section lists amendment procedure, versioning policy, and compliance review expectations.
 
 4. Consistency propagation checklist (convert prior checklist into active validations):
+
+   - Read each command file in `.claude/commands/*.md` (including this one) to verify no outdated references (agent-specific names like CLAUDE only) remain when generic guidance is required.
    - Read `.specify/templates/plan-template.md` and ensure any "Constitution Check" or rules align with updated principles.
    - Read `.specify/templates/spec-template.md` for scope/requirements alignment—update if constitution adds/removes mandatory sections or constraints.
    - Read `.specify/templates/tasks-template.md` and ensure task categorization reflects new or removed principle-driven task types (e.g., observability, versioning, testing discipline).
-   - Read each command file in `.specify/templates/commands/*.md` (including this one) to verify no outdated references (agent-specific names like CLAUDE only) remain when generic guidance is required.
+   - Read each command file in `.claude/commands/*.md` (including this one) to verify no outdated references (agent-specific names like CLAUDE only) remain when generic guidance is required.
    - Read any runtime guidance docs (e.g., `README.md`, `docs/quickstart.md`, or agent-specific guidance files if present). Update references to principles changed.
 
 5. Produce a Sync Impact Report (prepend as an HTML comment at top of the constitution file after update):
+
    - Version change: old → new
    - List of modified principles (old title → new title if renamed)
    - Added sections
@@ -52,6 +58,7 @@ Follow this execution flow:
    - Follow-up TODOs if any placeholders intentionally deferred.
 
 6. Validation before final output:
+
    - No remaining unexplained bracket tokens.
    - Version line matches report.
    - Dates ISO format YYYY-MM-DD.
@@ -81,17 +88,22 @@ Do not create a new template; always operate on the existing `.specify/memory/co
 
 As the main request completes, you MUST create and complete a PHR (Prompt History Record) using agent‑native tools when possible.
 
-1) Determine Stage
+1. Determine Stage
+
    - Stage: constitution | spec | plan | tasks | red | green | refactor | explainer | misc | general
 
-2) Generate Title and Determine Routing:
-   - Generate Title: 3–7 words (slug for filename)
-   - Route is automatically determined by stage:
+2. Generate Title and Determine Routing:
+
+   - If the script fails:
+     - Read `.specify/templates/phr-template.prompt.md` (or `templates/phr-template.prompt.md` at the repository root)
+     - Allocate an ID; compute the output path based on stage from step 2; write the file
+     - Fill placeholders and embed full PROMPT_TEXT and concise RESPONSE_TEXT - Route is automatically determined by stage:
      - `constitution` → `history/prompts/constitution/`
      - Feature stages → `history/prompts/<feature-name>/` (spec, plan, tasks, red, green, refactor, explainer, misc)
      - `general` → `history/prompts/general/`
 
-3) Create and Fill PHR (Shell first; fallback agent‑native)
+3. Create and Fill PHR (Shell first; fallback agent‑native)
+
    - Run: `.specify/scripts/bash/create-phr.sh --title "<title>" --stage <stage> [--feature <name>] --json`
    - Open the file and fill remaining placeholders (YAML + body), embedding full PROMPT_TEXT (verbatim) and concise RESPONSE_TEXT.
    - If the script fails:
@@ -99,6 +111,6 @@ As the main request completes, you MUST create and complete a PHR (Prompt Histor
      - Allocate an ID; compute the output path based on stage from step 2; write the file
      - Fill placeholders and embed full PROMPT_TEXT and concise RESPONSE_TEXT
 
-4) Validate + report
+4. Validate + report
    - No unresolved placeholders; path under `history/prompts/` and matches stage; stage/title/date coherent; print ID + path + stage + title.
    - On failure: warn, don't block. Skip only for `/sp.phr`.

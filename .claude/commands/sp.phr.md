@@ -36,8 +36,8 @@ After completing ANY work, automatically create a PHR:
 2. **Generate title**: 3-7 word descriptive title summarizing the work
 3. **Capture context**: COMPLETE conversation (never truncate to summaries)
 4. **Route correctly**:
-   - Pre-feature work → `history/prompts/`
-   - Feature-specific work → `specs/<feature>/prompts/`
+   - Pre-feature work (e.g., `constitution`, `general`) → `history/prompts/<stage-name>/`
+   - Feature-specific work (e.g., `spec`, `plan`, `tasks`, `red`, `green`, `refactor`, `explainer`, `misc`) → `history/prompts/<feature-name>/` - Feature-specific work → `specs/<feature>/prompts/`
 5. **Confirm**: Show "📝 PHR-NNNN recorded"
 
 ## OUTPUT STRUCTURE (with quick flywheel hooks)
@@ -61,9 +61,11 @@ If you already completed work and user just wants to record it:
 Select ONE stage that best describes the work:
 
 **Constitution** (→ `history/prompts/constitution/`):
+
 - `constitution` - Defining quality standards, project principles
 
 **Feature-specific** (→ `history/prompts/<feature-name>/` - requires feature context):
+
 - `spec` - Creating feature specifications
 - `plan` - Architecture design and technical approach
 - `tasks` - Implementation breakdown with test cases
@@ -74,6 +76,7 @@ Select ONE stage that best describes the work:
 - `misc` - Other feature-specific work
 
 **General/Catch-all** (→ `history/prompts/general/`):
+
 - `general` - General work not tied to a specific feature
 
 ## Step 3: Create PHR File
@@ -93,6 +96,7 @@ Call the PHR creation script with title and stage:
 Parse the JSON output to get: `id`, `path`, `context`, `stage`, `feature`
 
 **Routing is determined automatically:**
+
 - `constitution` → `history/prompts/constitution/`
 - Feature stages → `history/prompts/<feature-name>/`
 - `general` → `history/prompts/general/`
@@ -129,6 +133,7 @@ Read the file at `path` from JSON output. Replace ALL {{PLACEHOLDERS}}:
 - `{{REFLECTION_NOTE}}` → One key insight
 
 Add short evaluation notes:
+
 - **Failure modes observed:** Specify any issues encountered, such as ambiguous instructions, incomplete metadata, misrouted commands, or unexpected script errors. Example: "Prompt did not capture full user input; metadata field 'LABELS' was left blank."
 - **Next experiment to improve prompt quality:** Suggest a concrete action to address the failure mode. Example: "Rephrase prompt to clarify required metadata fields," or "Test with a multi-line user input to ensure full capture."
 
@@ -172,24 +177,26 @@ Be professional, concise, and action-oriented. Focus on what was accomplished an
 
 As the main request completes, you MUST create and complete a PHR (Prompt History Record) using agent‑native tools when possible.
 
-1) Determine Stage
+1. Determine Stage
+
    - Stage: constitution | spec | plan | tasks | red | green | refactor | explainer | misc | general
 
-2) Generate Title and Determine Routing:
+2. Generate Title and Determine Routing:
+
    - Generate Title: 3–7 words (slug for filename)
    - Route is automatically determined by stage:
      - `constitution` → `history/prompts/constitution/`
      - Feature stages → `history/prompts/<feature-name>/` (spec, plan, tasks, red, green, refactor, explainer, misc)
      - `general` → `history/prompts/general/`
 
-3) Create and Fill PHR (Shell first; fallback agent‑native)
+3. Create and Fill PHR (Shell first; fallback agent‑native)
+
    - Run: `.specify/scripts/bash/create-phr.sh --title "<title>" --stage <stage> [--feature <name>] --json`
    - Open the file and fill remaining placeholders (YAML + body), embedding full PROMPT_TEXT (verbatim) and concise RESPONSE_TEXT.
-   - If the script fails:
-     - Read `.specify/templates/phr-template.prompt.md` (or `templates/…`)
+   - Read `.specify/templates/phr-template.prompt.md` or `templates/phr-template.prompt.md` - Read `.specify/templates/phr-template.prompt.md` (or `templates/…`)
      - Allocate an ID; compute the output path based on stage from step 2; write the file
      - Fill placeholders and embed full PROMPT_TEXT and concise RESPONSE_TEXT
 
-4) Validate + report
+4. Validate + report
    - No unresolved placeholders; path under `history/prompts/` and matches stage; stage/title/date coherent; print ID + path + stage + title.
    - On failure: warn, don't block. Skip only for `/sp.phr`.
