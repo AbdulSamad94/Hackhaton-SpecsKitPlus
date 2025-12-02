@@ -3,6 +3,7 @@ import clsx from "clsx"
 import styles from "./styles.module.css"
 import { v4 as uuidv4 } from "uuid";
 import { SendHorizontal, BotMessageSquare, X } from 'lucide-react';
+import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 
 interface Message {
   id: string
@@ -12,6 +13,9 @@ interface Message {
 }
 
 export default function Chatbot() {
+  const { siteConfig } = useDocusaurusContext();
+  const apiUrl = siteConfig.customFields?.apiUrl as string;
+  
   const [isOpen, setIsOpen] = useState(false)
   const [inputValue, setInputValue] = useState("")
   const [isLoading, setIsLoading] = useState(false)
@@ -59,7 +63,7 @@ export default function Chatbot() {
         content: m.text 
       }))
 
-      const response = await fetch(`${process.env.DOCUSAURUS_API_URL}/api/chat`, {
+      const response = await fetch(`${apiUrl}/api/chat`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
