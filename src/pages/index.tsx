@@ -24,7 +24,7 @@ function HomepageHeader() {
             <Link className={clsx("button button--primary", styles.buttonLarge)} to="/docs/introduction/what-is-nextjs">
               Start Learning
             </Link>
-            <Link className={clsx("button button--secondary", styles.buttonLarge)} to="/docs">
+            <Link className={clsx("button button--secondary", styles.buttonLarge)} to="/docs/introduction/what-is-nextjs">
               View All Docs
             </Link>
           </div>
