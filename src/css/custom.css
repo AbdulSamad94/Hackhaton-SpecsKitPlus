@@ -1,30 +1,189 @@
-/**
- * Any CSS included here will be global. The classic template
- * bundles Infima by default. Infima is a CSS framework designed to
- * work well for content-centric websites.
- */
+/* Updated: Relaxing, modern documentation theme */
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap");
 
-/* You can override the default Infima variables here. */
 :root {
-  --ifm-color-primary: #2e8555;
-  --ifm-color-primary-dark: #29784c;
-  --ifm-color-primary-darker: #277148;
-  --ifm-color-primary-darkest: #205d3b;
-  --ifm-color-primary-light: #33925d;
-  --ifm-color-primary-lighter: #359962;
-  --ifm-color-primary-lightest: #3cad6e;
+  /* Relaxing Color Palette */
+  --ifm-color-primary: #2d7d6c;
+  --ifm-color-primary-dark: #245a4d;
+  --ifm-color-primary-darker: #1f4a40;
+  --ifm-color-primary-darkest: #163834;
+  --ifm-color-primary-light: #3fa385;
+  --ifm-color-primary-lighter: #4cb59e;
+  --ifm-color-primary-lightest: #6cc5b0;
+
+  --ifm-font-family-base: "Plus Jakarta Sans", system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, sans-serif;
+  --ifm-font-family-monospace: "JetBrains Mono", monospace;
+
+  /* Soft, neutral background */
+  --ifm-background-color: #fafaf8;
+  --ifm-color-content: #2c3e50;
+  --ifm-color-emphasis-200: #e8e8e6;
+  --ifm-color-emphasis-300: #d4d4d0;
+  --ifm-color-emphasis-700: #6b7280;
+
+  /* Navbar */
+  --ifm-navbar-background-color: #ffffff;
+  --ifm-navbar-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+
+  /* Footer */
+  --ifm-footer-background-color: #f5f5f3;
+
+  /* Hero gradient - soft and calming */
+  --ifm-hero-background-color: linear-gradient(135deg, #ffffff 0%, #f5f5f3 50%, #f0f0ed 100%);
+
   --ifm-code-font-size: 95%;
-  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+  --docusaurus-highlighted-code-line-bg: rgba(45, 125, 108, 0.08);
 }
 
-/* For readability concerns, you should choose a lighter palette in dark mode. */
-[data-theme='dark'] {
-  --ifm-color-primary: #25c2a0;
-  --ifm-color-primary-dark: #21af90;
-  --ifm-color-primary-darker: #1fa588;
-  --ifm-color-primary-darkest: #1a8870;
-  --ifm-color-primary-light: #29d5b0;
-  --ifm-color-primary-lighter: #32d8b4;
-  --ifm-color-primary-lightest: #4fddbf;
-  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+/* Dark mode - also relaxing */
+[data-theme="dark"] {
+  --ifm-color-primary: #5eb59d;
+  --ifm-color-primary-dark: #52a08f;
+  --ifm-color-primary-darker: #488b82;
+  --ifm-color-primary-darkest: #3d7675;
+  --ifm-color-primary-light: #6ac5ad;
+  --ifm-color-primary-lighter: #78d1b7;
+  --ifm-color-primary-lightest: #9cdfc8;
+
+  --ifm-background-color: #0f1419;
+  --ifm-color-content: #e0e0dd;
+  --ifm-color-emphasis-200: #2c3340;
+  --ifm-color-emphasis-300: #3d454f;
+  --ifm-color-emphasis-700: #9ca3af;
+
+  --ifm-navbar-background-color: #161b23;
+  --ifm-navbar-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3);
+
+  --ifm-footer-background-color: #0f1419;
+
+  --ifm-hero-background-color: linear-gradient(135deg, #1a1f28 0%, #161b23 50%, #0f1419 100%);
+
+  --docusaurus-highlighted-code-line-bg: rgba(94, 181, 157, 0.1);
+}
+
+/* Clean Navbar */
+.navbar {
+  box-shadow: var(--ifm-navbar-shadow);
+  border-bottom: 1px solid var(--ifm-color-emphasis-200);
+}
+
+/* Hero Section - Clean and Spacious */
+.hero {
+  text-align: center;
+  padding: 5rem 0;
+  background: var(--ifm-hero-background-color);
+  border-bottom: 1px solid var(--ifm-color-emphasis-200);
+}
+
+.hero__title {
+  font-size: 3.5rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--ifm-color-primary-dark);
+  margin-bottom: 1rem;
+  line-height: 1.1;
+}
+
+[data-theme="dark"] .hero__title {
+  color: var(--ifm-color-primary-light);
+}
+
+.hero__subtitle {
+  font-size: 1.25rem;
+  color: var(--ifm-color-emphasis-700);
+  max-width: 600px;
+  margin: 0 auto 2rem;
+  font-weight: 500;
+  line-height: 1.6;
+}
+
+/* Buttons - Soft and Professional */
+.button--primary {
+  background-color: var(--ifm-color-primary);
+  color: white;
+  border: none;
+  font-weight: 600;
+  padding: 0.75rem 2rem;
+  border-radius: 8px;
+  transition: all 0.25s ease;
+  box-shadow: 0 2px 8px rgba(45, 125, 108, 0.15);
+}
+
+.button--primary:hover {
+  background-color: var(--ifm-color-primary-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(45, 125, 108, 0.25);
+  color: white;
+}
+
+.button--secondary {
+  background-color: var(--ifm-color-emphasis-200);
+  color: var(--ifm-color-content);
+  border: 1px solid var(--ifm-color-emphasis-300);
+  font-weight: 600;
+  padding: 0.75rem 2rem;
+  border-radius: 8px;
+  transition: all 0.25s ease;
+}
+
+.button--secondary:hover {
+  background-color: var(--ifm-color-emphasis-300);
+  transform: translateY(-1px);
+}
+
+/* Feature Cards - Clean Layout */
+.col {
+  margin-bottom: 3rem;
+}
+
+.col h3 {
+  font-weight: 700;
+  font-size: 1.35rem;
+  margin-bottom: 0.75rem;
+  color: var(--ifm-color-primary);
+  margin-top: 1.5rem;
+}
+
+.col p {
+  color: var(--ifm-color-emphasis-700);
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+/* Footer - Subtle */
+footer {
+  background-color: var(--ifm-footer-background-color);
+  border-top: 1px solid var(--ifm-color-emphasis-200);
+  padding: 3rem 0;
+}
+
+/* Code Blocks - Better Contrast */
+:not(pre)>code {
+  background-color: var(--ifm-color-emphasis-200);
+  color: var(--ifm-color-primary-dark);
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+[data-theme="dark"] :not(pre)>code {
+  background-color: var(--ifm-color-emphasis-300);
+  color: var(--ifm-color-primary-light);
+}
+
+/* Card-like containers */
+.margin-vert--lg {
+  margin-top: 1.5rem !important;
+  margin-bottom: 1.5rem !important;
+}
+
+/* Better spacing for content */
+.container {
+  max-width: 1200px;
+  padding: 0 1.5rem;
+}
+
+/* Smooth transitions */
+* {
+  transition: all
 }

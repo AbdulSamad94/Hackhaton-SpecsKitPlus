@@ -1,0 +1,8 @@
+{
+  "label": "API Routes",
+  "position": 5,
+  "link": {
+    "type": "generated-index",
+    "description": "Next.js provides a solution to build your API with Route Handlers."
+  }
+}

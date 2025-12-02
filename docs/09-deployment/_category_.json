@@ -1,0 +1,8 @@
+{
+  "label": "Deployment",
+  "position": 9,
+  "link": {
+    "type": "generated-index",
+    "description": "Next.js can be deployed to any hosting provider that supports Node.js or Docker."
+  }
+}

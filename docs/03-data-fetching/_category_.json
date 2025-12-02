@@ -1,0 +1,8 @@
+{
+  "label": "Data Fetching",
+  "position": 3,
+  "link": {
+    "type": "generated-index",
+    "description": "Data fetching in Next.js allows you to render your content in different ways."
+  }
+}
