@@ -35,6 +35,12 @@ const config: Config = {
     locales: ['en'],
   },
 
+  // Custom fields to expose environment variables to client-side code
+  customFields: {
+    // API URL for the chatbot backend
+    apiUrl: process.env.DOCUSAURUS_API_URL || 'http://127.0.0.1:8000',
+  },
+
   presets: [
     [
       'classic',
