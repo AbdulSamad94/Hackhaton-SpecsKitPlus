@@ -33,7 +33,7 @@ export default function Chatbot() {
     scrollToBottom()
   }, [messages, isOpen])
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!inputValue.trim()) return
 
     const newUserMessage: Message = {
@@ -47,17 +47,43 @@ export default function Chatbot() {
     setInputValue("")
     setIsLoading(true)
 
-    // Simulate bot response
-    setTimeout(() => {
+    try {
+      const response = await fetch(`${process.env.NEXT_API_URL}/api/chat`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message: inputValue,
+          history: messages.map(m => ({ role: m.sender, content: m.text }))
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to get response")
+      }
+
+      const data = await response.json()
+
       const botResponse: Message = {
         id: uuidv4(),
-        text: "This is a demo response. I'll be connected to a real RAG system soon! 🚀",
+        text: data.response,
         sender: "bot",
         timestamp: new Date(),
       }
       setMessages((prev) => [...prev, botResponse])
+    } catch (error) {
+      console.error("Error sending message:", error)
+      const errorResponse: Message = {
+        id: uuidv4(),
+        text: "Sorry, I'm having trouble connecting to the server. Please try again later.",
+        sender: "bot",
+        timestamp: new Date(),
+      }
+      setMessages((prev) => [...prev, errorResponse])
+    } finally {
       setIsLoading(false)
-    }, 2000)
+    }
   }
 
     const handleKeyPress = useCallback((e: React.KeyboardEvent) => {
