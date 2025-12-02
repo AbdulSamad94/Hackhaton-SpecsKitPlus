@@ -5,8 +5,8 @@ import type * as Preset from '@docusaurus/preset-classic';
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
 const config: Config = {
-  title: 'My Site',
-  tagline: 'Dinosaurs are cool',
+  title: 'Mastering Next.js',
+  tagline: 'The Complete Guide to Building Modern Web Applications',
   favicon: 'img/favicon.ico',
 
   // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
@@ -75,13 +75,20 @@ const config: Config = {
       respectPrefersColorScheme: true,
     },
     navbar: {
-      title: 'My Site',
-      logo: {
-        alt: 'My Site Logo',
-        src: 'img/logo.svg',
-      },
+      title: 'Mastering Next.js',
+
       items: [
-        { to: '/docs/hello', label: 'Hello', position: 'left' },
+        {
+          type: 'docSidebar',
+          sidebarId: 'tutorialSidebar',
+          position: 'left',
+          label: 'Book',
+        },
+        {
+          href: 'https://github.com/facebook/docusaurus',
+          label: 'GitHub',
+          position: 'right',
+        },
       ],
     },
     footer: {
@@ -91,8 +98,16 @@ const config: Config = {
           title: 'Docs',
           items: [
             {
-              label: 'Tutorial',
-              to: '/docs/hello',
+              label: 'Introduction',
+              to: '/docs/introduction/what-is-nextjs',
+            },
+            {
+              label: 'Routing',
+              to: '/docs/routing/file-based-routing',
+            },
+            {
+              label: 'Data Fetching',
+              to: '/docs/data-fetching/server-components',
             },
           ],
         },
@@ -127,7 +142,7 @@ const config: Config = {
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} My Project, Inc. Built with Docusaurus.`,
+      copyright: `Copyright © ${new Date().getFullYear()} Mastering Next.js. Built with Docusaurus.`,
     },
     prism: {
       theme: prismThemes.github,
