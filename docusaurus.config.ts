@@ -85,7 +85,7 @@ const config: Config = {
           label: 'Book',
         },
         {
-          href: 'https://github.com/facebook/docusaurus',
+          href: 'https://github.com/AbdulSamad94/Hackhaton-SpecsKitPlus',
           label: 'GitHub',
           position: 'right',
         },

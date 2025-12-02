@@ -14,7 +14,7 @@ function HomepageHeader() {
       <div className="container">
         <div className={styles.heroContent}>
           <Heading as="h1" className={styles.heroTitle}>
-            Master Next.js
+            {siteConfig.title}
           </Heading>
           <p className={styles.heroSubtitle}>
             The complete guide to building modern, production-ready applications with React and Next.js. Learn from zero
@@ -143,19 +143,19 @@ function LearningPath() {
   const paths = [
     {
       level: "Beginner",
-      topics: ["What is Next.js?", "Installation & Setup", "Pages & Routing", "Basic Components"],
+      topics: ["What is Next.js?", "Installation & Setup", "Pages & Routing", "Basic Components"]
 
     },
     {
       level: "Intermediate",
-      topics: ["App Router", "Server Components", "Data Fetching", "Styling & CSS"],
+      topics: ["App Router", "Server Components", "Data Fetching", "Styling & CSS"]
       
     },
     {
       level: "Advanced",
-      topics: ["Performance Optimization", "Edge Functions", "API Routes", "Deployment"],
+      topics: ["Performance Optimization", "Edge Functions", "API Routes", "Deployment"]
       
-    },
+    }
   ]
 
   return (
