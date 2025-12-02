@@ -36,26 +36,37 @@ export default function Chatbot() {
   const handleSend = async () => {
     if (!inputValue.trim()) return
 
+    const userMessage = inputValue.trim()
+
     const newUserMessage: Message = {
       id: uuidv4(),
-      text: inputValue,
+      text: userMessage,
       sender: "user",
       timestamp: new Date(),
     }
 
-    setMessages((prev) => [...prev, newUserMessage])
+    // Clear input immediately for better UX
     setInputValue("")
     setIsLoading(true)
+    
+    // Update messages with the new user message
+    setMessages((prev) => [...prev, newUserMessage])
 
     try {
+      // Build history that includes the current message
+      const messageHistory = [...messages, newUserMessage].map(m => ({ 
+        role: m.sender, 
+        content: m.text 
+      }))
+
       const response = await fetch(`${process.env.DOCUSAURUS_API_URL}/api/chat`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          message: inputValue,
-          history: messages.map(m => ({ role: m.sender, content: m.text }))
+          message: userMessage,
+          history: messageHistory
         }),
       })
 
@@ -146,8 +157,17 @@ export default function Chatbot() {
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={handleKeyPress}
+              disabled={isLoading}
             />        
-              <SendHorizontal onClick={handleSend} aria-label="Send message" className={styles.sendButton} />
+              <SendHorizontal 
+                onClick={handleSend} 
+                aria-label="Send message" 
+                className={styles.sendButton}
+                style={{ 
+                  opacity: isLoading || !inputValue.trim() ? 0.5 : 1,
+                  cursor: isLoading || !inputValue.trim() ? 'not-allowed' : 'pointer'
+                }}
+              />
           </div>
         </div>
       )}
