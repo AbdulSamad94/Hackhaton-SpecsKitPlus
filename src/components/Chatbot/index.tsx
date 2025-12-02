@@ -1,6 +1,8 @@
-import React, { useState, useRef, useEffect } from "react"
+import React, { useState, useRef, useEffect, useCallback } from "react"
 import clsx from "clsx"
 import styles from "./styles.module.css"
+import { v4 as uuidv4 } from "uuid";
+import { SendHorizontal, BotMessageSquare, X } from 'lucide-react';
 
 interface Message {
   id: string
@@ -15,7 +17,7 @@ export default function Chatbot() {
   const [isLoading, setIsLoading] = useState(false)
   const [messages, setMessages] = useState<Message[]>([
     {
-      id: "1",
+      id: uuidv4(),
       text: "Hello! 👋 I'm your AI assistant. How can I help you master Next.js today?",
       sender: "bot",
       timestamp: new Date(),
@@ -29,13 +31,13 @@ export default function Chatbot() {
 
   useEffect(() => {
     scrollToBottom()
-  }, [messages, isOpen, isLoading])
+  }, [messages, isOpen])
 
   const handleSend = () => {
     if (!inputValue.trim()) return
 
     const newUserMessage: Message = {
-      id: Date.now().toString(),
+      id: uuidv4(),
       text: inputValue,
       sender: "user",
       timestamp: new Date(),
@@ -48,7 +50,7 @@ export default function Chatbot() {
     // Simulate bot response
     setTimeout(() => {
       const botResponse: Message = {
-        id: (Date.now() + 1).toString(),
+        id: uuidv4(),
         text: "This is a demo response. I'll be connected to a real RAG system soon! 🚀",
         sender: "bot",
         timestamp: new Date(),
@@ -58,12 +60,12 @@ export default function Chatbot() {
     }, 2000)
   }
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+    const handleKeyPress = useCallback((e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault()
-      handleSend()
+      e.preventDefault();
+      handleSend();
     }
-  }
+  }, [handleSend]);
 
   return (
     <div className={styles.chatbotContainer}>
@@ -118,18 +120,8 @@ export default function Chatbot() {
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={handleKeyPress}
-            />
-            <button 
-              className={styles.sendButton} 
-              onClick={handleSend}
-              disabled={!inputValue.trim()}
-              aria-label="Send message"
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="22" y1="2" x2="11" y2="13"></line>
-                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-              </svg>
-            </button>
+            />        
+              <SendHorizontal onClick={handleSend} aria-label="Send message" className={styles.sendButton} />
           </div>
         </div>
       )}
@@ -141,14 +133,9 @@ export default function Chatbot() {
         aria-label="Toggle chat"
       >
         {isOpen ? (
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
+          <X />
         ) : (
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-          </svg>
+          <BotMessageSquare />
         )}
       </button>
     </div>
