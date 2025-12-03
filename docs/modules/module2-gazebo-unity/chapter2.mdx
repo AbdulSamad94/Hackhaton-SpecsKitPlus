@@ -1,0 +1,341 @@
+---
+sidebar_position: 2
+---
+
+# Chapter 2: Sensor Simulation & Unity Integration
+
+## Learning Objectives
+
+- Simulate RGB-D cameras, LiDAR, and IMUs in Gazebo
+- Process sensor data in ROS 2
+- Integrate Unity for high-fidelity rendering
+- Create Human-Robot Interaction scenarios
+
+## 2.1 Camera Simulation
+
+### Adding a Depth Camera
+
+```xml title="urdf/humanoid_with_camera.urdf"
+<robot name="humanoid_with_camera">
+  
+  <!-- Camera link -->
+  <link name="camera_link">
+    <visual>
+      <geometry>
+        <box size="0.05 0.1 0.03"/>
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="0.05 0.1 0.03"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.1"/>
+      <inertia ixx="0.0001" ixy="0" ixz="0"
+               iyy="0.0001" iyz="0" izz="0.0001"/>
+    </inertial>
+  </link>
+  
+  <joint name="camera_joint" type="fixed">
+    <parent link="head"/>
+    <child link="camera_link"/>
+    <origin xyz="0.1 0 0" rpy="0 0 0"/>
+  </joint>
+  
+  <!-- Gazebo camera plugin -->
+  <gazebo reference="camera_link">
+    <sensor name="rgbd_camera" type="depth">
+      <update_rate>30.0</update_rate>
+      <camera>
+        <horizontal_fov>1.047</horizontal_fov> <!-- 60 degrees -->
+        <image>
+          <width>640</width>
+          <height>480</height>
+          <format>R8G8B8</format>
+        </image>
+        <clip>
+          <near>0.1</near>
+          <far>10.0</far>
+        </clip>
+      </camera>
+      <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
+        <ros>
+          <namespace>/</namespace>
+          <remapping>~/image_raw:=/camera/rgb/image_raw</remapping>
+          <remapping>~/camera_info:=/camera/rgb/camera_info</remapping>
+          <remapping>~/depth/image_raw:=/camera/depth/image_raw</remapping>
+        </ros>
+        <camera_name>camera</camera_name>
+        <frame_name>camera_link</frame_name>
+      </plugin>
+    </sensor>
+  </gazebo>
+  
+</robot>
+```
+
+### Accessing Camera Data
+
+```python title="scripts/camera_subscriber.py"
+import rclpy
+from rclpy.node import Node
+from sensor_msgs.msg import Image, CameraInfo
+from cv_bridge import CvBridge
+import cv2
+import numpy as np
+
+class CameraProcessor(Node):
+    def __init__(self):
+        super().__init__('camera_processor')
+        self.bridge = CvBridge()
+        
+        # Subscribe to RGB and depth
+        self.rgb_sub = self.create_subscription(
+            Image, '/camera/rgb/image_raw', self.rgb_callback, 10
+        )
+        self.depth_sub = self.create_subscription(
+            Image, '/camera/depth/image_raw', self.depth_callback, 10
+        )
+        self.info_sub = self.create_subscription(
+            CameraInfo, '/camera/rgb/camera_info', self.info_callback, 10
+        )
+        
+        self.camera_matrix = None
+    
+    def info_callback(self, msg):
+        """Store camera calibration."""
+        self.camera_matrix = np.array(msg.k).reshape(3, 3)
+    
+    def rgb_callback(self, msg):
+        """Process RGB image."""
+        cv_image = self.bridge.imgmsg_to_cv2(msg, 'bgr8')
+        
+        # Simple object detection (red objects)
+        hsv = cv2.cvtColor(cv_image, cv2.COLOR_BGR2HSV)
+        lower_red = np.array([0, 100, 100])
+        upper_red = np.array([10, 255, 255])
+        mask = cv2.inRange(hsv, lower_red, upper_red)
+        
+        # Find contours
+        contours, _ = cv2.findContours(
+            mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+        )
+        
+        for contour in contours:
+            if cv2.contourArea(contour) > 500:
+                M = cv2.moments(contour)
+                if M['m00'] > 0:
+                    cx = int(M['m10'] / M['m00'])
+                    cy = int(M['m01'] / M['m00'])
+                    cv2.circle(cv_image, (cx, cy), 10, (0, 255, 0), -1)
+        
+        cv2.imshow('RGB Camera', cv_image)
+        cv2.waitKey(1)
+    
+    def depth_callback(self, msg):
+        """Process depth image."""
+        # Depth is typically float32 in meters
+        depth_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='passthrough')
+        
+        # Normalize for visualization
+        depth_normalized = cv2.normalize(
+            depth_image, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U
+        )
+        
+        # Apply colormap
+        depth_colored = cv2.applyColorMap(depth_normalized, cv2.COLORMAP_JET)
+        
+        cv2.imshow('Depth Camera', depth_colored)
+        cv2.waitKey(1)
+```
+
+## 2.2 LiDAR Simulation
+
+### 2D LiDAR
+
+```xml
+<gazebo reference="base_link">
+  <sensor name="lidar" type="gpu_ray">
+    <pose>0 0 0.1 0 0 0</pose>
+    <update_rate>10</update_rate>
+    <ray>
+      <scan>
+        <horizontal>
+          <samples>720</samples>
+          <resolution>1</resolution>
+          <min_angle>-3.14159</min_angle>
+          <max_angle>3.14159</max_angle>
+        </horizontal>
+      </scan>
+      <range>
+        <min>0.1</min>
+        <max>30.0</max>
+        <resolution>0.01</resolution>
+      </range>
+    </ray>
+    <plugin name="gazebo_ros_lidar" filename="libgazebo_ros_ray_sensor.so">
+      <ros>
+        <remapping>~/out:=/scan</remapping>
+      </ros>
+      <output_type>sensor_msgs/LaserScan</output_type>
+    </plugin>
+  </sensor>
+</gazebo>
+```
+
+### 3D LiDAR (VLP-16 Style)
+
+```xml
+<sensor name="velodyne" type="gpu_ray">
+  <ray>
+    <scan>
+      <horizontal>
+        <samples>1875</samples>
+        <resolution>1</resolution>
+        <min_angle>-3.14159</min_angle>
+        <max_angle>3.14159</max_angle>
+      </horizontal>
+      <vertical>
+        <samples>16</samples>
+        <resolution>1</resolution>
+        <min_angle>-0.2617</min_angle> <!-- -15 degrees -->
+        <max_angle>0.2617</max_angle>  <!-- +15 degrees -->
+      </vertical>
+    </scan>
+    <range>
+      <min>0.9</min>
+      <max>100.0</max>
+    </range>
+  </ray>
+  <plugin name="gazebo_ros_velodyne" filename="libgazebo_ros_ray_sensor.so">
+    <output_type>sensor_msgs/PointCloud2</output_type>
+  </plugin>
+</sensor>
+```
+
+## 2.3 IMU Simulation
+
+```xml
+<gazebo reference="base_link">
+  <sensor name="imu_sensor" type="imu">
+    <always_on>true</always_on>
+    <update_rate>100</update_rate>
+    <imu>
+      <angular_velocity>
+        <x>
+          <noise type="gaussian">
+            <mean>0.0</mean>
+            <stddev>0.0002</stddev>
+          </noise>
+        </x>
+        <y>
+          <noise type="gaussian">
+            <mean>0.0</mean>
+            <stddev>0.0002</stddev>
+          </noise>
+        </y>
+        <z>
+          <noise type="gaussian">
+            <mean>0.0</mean>
+            <stddev>0.0002</stddev>
+          </noise>
+        </z>
+      </angular_velocity>
+      <linear_acceleration>
+        <x>
+          <noise type="gaussian">
+            <mean>0.0</mean>
+            <stddev>0.017</stddev>
+          </noise>
+        </x>
+        <y>
+          <noise type="gaussian">
+            <mean>0.0</mean>
+            <stddev>0.017</stddev>
+          </noise>
+        </y>
+        <z>
+          <noise type="gaussian">
+            <mean>0.0</mean>
+            <stddev>0.017</stddev>
+          </noise>
+        </z>
+      </linear_acceleration>
+    </imu>
+    <plugin name="gazebo_ros_imu" filename="libgazebo_ros_imu_sensor.so">
+      <ros>
+        <remapping>~/out:=/imu</remapping>
+      </ros>
+    </plugin>
+  </sensor>
+</gazebo>
+```
+
+## 2.4 Unity Integration
+
+### Why Unity?
+
+- **Photorealistic rendering** for vision training
+- **VR/AR support** for teleoperation
+- **Asset ecosystem** (environments, humans, objects)
+- **Physics** (though we often use Gazebo for that)
+
+### ROS-Unity Setup
+
+1. Install Unity Hub and Unity 2021.3 LTS
+2. Install ROS-TCP-Connector package
+
+```bash
+# In Unity Package Manager
+https://github.com/Unity-Technologies/ROS-TCP-Connector.git?path=/com.unity.robotics.ros-tcp-connector
+```
+
+3. Configure ROS-TCP-Endpoint in ROS 2
+
+```bash
+ros2 run ros_tcp_endpoint default_server_endpoint --ros-args -p ROS_IP:=0.0.0.0
+```
+
+### Creating a Scene
+
+In Unity:
+1. Import humanoid URDF using URDF Importer
+2. Add environment (living room from Asset Store)
+3. Add lighting for realism
+4. Configure ROS connection
+
+### Publishing from Unity
+
+```csharp
+using Unity.Robotics.ROSTCPConnector;
+using RosMessageTypes.Sensor;
+
+public class CameraPublisher : MonoBehaviour
+{
+    ROSConnection ros;
+    public Camera unityCamera;
+    
+    void Start()
+    {
+        ros = ROSConnection.GetOrCreateInstance();
+        ros.RegisterPublisher<ImageMsg>("/unity/camera/image");
+    }
+    
+    void Update()
+    {
+        // Convert Unity camera to ROS Image message
+        // (simplified - real implementation needs encoding)
+        var msg = new ImageMsg();
+        ros.Publish("/unity/camera/image", msg);
+    }
+}
+```
+
+## Summary
+
+✅ Simulate RGB-D cameras, LiDAR, and IMUs  
+✅ Process sensor data in ROS 2  
+✅ Integrate Unity for visualization  
+
+**Next**: [Module 3: NVIDIA Isaac](/docs/modules/module3-nvidia-isaac/chapter1)

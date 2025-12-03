@@ -1,0 +1,8 @@
+{
+  "label": "Hardware",
+  "position": 4,
+  "link": {
+    "type": "generated-index",
+    "description": "Hardware setup guides for workstations and robots."
+  }
+}

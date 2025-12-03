@@ -18,15 +18,14 @@ function HomepageHeader() {
             {siteConfig.title}
           </Heading>
           <p className={styles.heroSubtitle}>
-            The complete guide to building modern, production-ready applications with React and Next.js. Learn from zero
-            to hero with comprehensive tutorials, best practices, and real-world examples.
+            {siteConfig.tagline}
           </p>
           <div className={styles.heroButtons}>
-            <Link className={clsx("button button--primary", styles.buttonLarge)} to="/docs/introduction/what-is-nextjs">
+            <Link className={clsx("button button--primary", styles.buttonLarge)} to="/docs/intro">
               Start Learning
             </Link>
-            <Link className={clsx("button button--secondary", styles.buttonLarge)} to="/docs/introduction/what-is-nextjs">
-              View All Docs
+            <Link className={clsx("button button--secondary", styles.buttonLarge)} to="/docs/modules/module1-ros2/chapter1">
+              View Modules
             </Link>
           </div>
         </div>
@@ -42,20 +41,20 @@ function StatsSection() {
       <div className="container">
         <div className={styles.statsGrid}>
           <div className={styles.statCard}>
-            <div className={styles.statNumber}>50+</div>
-            <div className={styles.statLabel}>Comprehensive Chapters</div>
+            <div className={styles.statNumber}>4</div>
+            <div className={styles.statLabel}>Core Modules</div>
           </div>
           <div className={styles.statCard}>
-            <div className={styles.statNumber}>200+</div>
-            <div className={styles.statLabel}>Code Examples</div>
+            <div className={styles.statNumber}>5+</div>
+            <div className={styles.statLabel}>Hands-on Labs</div>
+          </div>
+          <div className={styles.statCard}>
+            <div className={styles.statNumber}>1</div>
+            <div className={styles.statLabel}>Capstone Project</div>
           </div>
           <div className={styles.statCard}>
             <div className={styles.statNumber}>100%</div>
             <div className={styles.statLabel}>Open Source</div>
-          </div>
-          <div className={styles.statCard}>
-            <div className={styles.statNumber}>Latest</div>
-            <div className={styles.statLabel}>Next.js 15 Ready</div>
           </div>
         </div>
       </div>
@@ -87,38 +86,38 @@ function Feature({
 function HomepageFeatures() {
   const features = [
     {
-      title: "From Zero to Hero",
+      title: "ROS 2 Humble",
       description:
-        "Start with the fundamentals and progress through advanced concepts. Perfect for beginners and intermediate developers alike.",
+        "Master the industry-standard middleware. Learn nodes, topics, actions, and lifecycle management for robust robot control.",
+      icon: "🤖",
+    },
+    {
+      title: "Simulation First",
+      description:
+        "Test safely in Gazebo Fortress and Unity. Bridge the Sim-to-Real gap with high-fidelity physics and rendering.",
+      icon: "🎮",
+    },
+    {
+      title: "NVIDIA Isaac Ecosystem",
+      description:
+        "Leverage Isaac Sim for photorealistic environments and Isaac Gym for massively parallel reinforcement learning.",
       icon: "🚀",
     },
     {
-      title: "Modern Stack",
+      title: "Vision-Language-Action",
+      description: "Integrate VLA models like RT-2 and PaLM-E. Give your robot the ability to understand natural language and reason.",
+      icon: "🧠",
+    },
+    {
+      title: "Real Hardware",
       description:
-        "Learn the latest Next.js features: App Router, Server Components, Edge Functions, and optimized performance patterns.",
-      icon: "⚡",
+        "Deploy to NVIDIA Jetson Orin. Work with RealSense cameras, LiDARs, and IMUs on physical humanoid platforms.",
+      icon: "🔌",
     },
     {
-      title: "Production Ready",
-      description:
-        "Real-world best practices for performance, SEO, security, and deployment to Vercel and other platforms.",
-      icon: "🎯",
-    },
-    {
-      title: "Hands-On Examples",
-      description: "Build real projects: authentication systems, e-commerce sites, AI apps, databases, and more.",
-      icon: "💻",
-    },
-    {
-      title: "Community Driven",
-      description:
-        "Join thousands of developers learning Next.js. Share your progress and help others in the community.",
-      icon: "👥",
-    },
-    {
-      title: "Always Updated",
-      description: "Keep up with the latest Next.js releases and best practices. New content added regularly.",
-      icon: "📚",
+      title: "Capstone Project",
+      description: "Build a complete Autonomous Humanoid with Conversational AI. From URDF to Navigation to Chat Interface.",
+      icon: "🎓",
     },
   ]
 
@@ -126,8 +125,8 @@ function HomepageFeatures() {
     <section className={styles.featuresSection}>
       <div className="container">
         <div className={styles.sectionHeader}>
-          <Heading as="h2">Why Learn with This Guide?</Heading>
-          <p>Everything you need to become a Next.js expert</p>
+          <Heading as="h2">Why This Course?</Heading>
+          <p>The comprehensive path to becoming a Physical AI Engineer</p>
         </div>
         <div className={styles.featuresGrid}>
           {features.map((props, idx) => (
@@ -143,18 +142,18 @@ function HomepageFeatures() {
 function LearningPath() {
   const paths = [
     {
-      level: "Beginner",
-      topics: ["What is Next.js?", "Installation & Setup", "Pages & Routing", "Basic Components"]
+      level: "Module 1: Foundations",
+      topics: ["ROS 2 Basics", "Nodes & Topics", "Launch Files", "URDF Description"]
 
     },
     {
-      level: "Intermediate",
-      topics: ["App Router", "Server Components", "Data Fetching", "Styling & CSS"]
+      level: "Module 2 & 3: Simulation",
+      topics: ["Gazebo Fortress", "Unity HRI", "Isaac Sim", "Visual SLAM"]
       
     },
     {
-      level: "Advanced",
-      topics: ["Performance Optimization", "Edge Functions", "API Routes", "Deployment"]
+      level: "Module 4: Intelligence",
+      topics: ["VLA Models", "Whisper Integration", "Cognitive Planning", "Sim-to-Real"]
       
     }
   ]
@@ -164,7 +163,7 @@ function LearningPath() {
       <div className="container">
         <div className={styles.sectionHeader}>
           <Heading as="h2">Your Learning Journey</Heading>
-          <p>Progress through structured levels at your own pace</p>
+          <p>Structured modules to take you from Zero to Hero</p>
         </div>
         <div className={styles.pathGrid}>
           {paths.map((path, idx) => (
@@ -189,10 +188,10 @@ function CallToAction() {
     <section className={styles.ctaSection}>
       <div className="container">
         <div className={styles.ctaContent}>
-          <Heading as="h2">Ready to Master Next.js?</Heading>
-          <p>Join developers worldwide who are building amazing applications with Next.js. Start your journey today.</p>
-          <Link className={clsx("button button--primary", styles.buttonLarge)} to="/docs/introduction/what-is-nextjs">
-            Begin Your Learning Journey
+          <Heading as="h2">Ready to Build the Future?</Heading>
+          <p>Join the revolution of Embodied Intelligence. Start building your autonomous humanoid today.</p>
+          <Link className={clsx("button button--primary", styles.buttonLarge)} to="/docs/intro">
+            Start Your Journey
           </Link>
         </div>
       </div>
@@ -204,8 +203,8 @@ export default function Home(): ReactNode {
   const { siteConfig } = useDocusaurusContext()
   return (
     <Layout
-      title="Master Next.js - Complete Learning Guide"
-      description="The complete guide to mastering Next.js. Learn from basics to production-ready applications."
+      title={`Hello from ${siteConfig.title}`}
+      description="The complete guide to Physical AI & Humanoid Robotics."
     >
       <HomepageHeader />
       <StatsSection />

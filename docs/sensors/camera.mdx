@@ -1,0 +1,301 @@
+# RGB-D Cameras for Humanoid Robotics
+
+## Overview
+
+**RGB-D cameras** combine traditional color imaging (RGB) with depth sensing (D), providing both appearance and geometry information. For humanoid robots, this enables:
+
+- 3D object detection and pose estimation
+- Obstacle avoidance in cluttered environments
+- Human gesture recognition
+- Point cloud generation for manipulation
+- Visual servoing
+
+## Popular Cameras
+
+### Intel RealSense D435i
+
+- **Resolution**: RGB 1920x1080, Depth 1280x720
+- **Range**: 0.3m to 10m
+- **FPS**: Up to 90 FPS
+- **IMU**: Built-in 6-DOF IMU
+- **Interface**: USB 3.0
+- **Price**: ~$200
+
+```bash
+# Install RealSense ROS wrapper
+sudo apt install ros-humble-realsense2-camera
+```
+
+### Luxonis OAK-D
+
+- **Resolution**: RGB 4K, Depth 1280x800
+- **Onboard AI**: Myriad X VPU for neural network inference
+- **Range**: 0.2m to 15m
+- **FPS**: 60 FPS
+- **Unique**: Run DNN models on-camera
+
+```bash
+# Install OAK-D  ROS wrapper
+pip install depthai-ros
+```
+
+## Camera Calibration
+
+### Intrinsic Parameters
+
+The camera's internal properties:
+
+```
+K = | fx  0   cx |
+    | 0   fy  cy |
+    | 0   0   1  |
+```
+
+- `fx, fy`: Focal lengths (pixels)
+- `cx, cy`: Principal point (optical center)
+
+### Extrinsic Parameters
+
+The camera's pose relative to the robot base:
+
+```
+T_base_camera = [R | t]
+                [0 | 1]
+```
+
+- `R`: 3x3 rotation matrix
+- `t`: 3x1 translation vector
+
+### Calibrating with Checkerboards
+
+```bash
+# Capture calibration images
+ros2 run camera_calibration cameracalibrator \
+  --size 8x6 --square 0.025 \
+  image:=/camera/color/image_raw \
+  camera:=/camera/color
+
+# Save calibration
+# Results saved to /tmp/calibrationdata.tar.gz
+```
+
+## Point Cloud Generation
+
+### Converting Depth to 3D Points
+
+```python
+import numpy as np
+
+def depth_to_pointcloud(depth_image, camera_matrix):
+    """
+    Convert depth image to 3D point cloud.
+    
+    Args:
+        depth_image: HxW array of depths (meters)
+        camera_matrix: 3x3 intrinsic matrix
+    
+    Returns:
+        pointcloud: Nx3 array of (x, y, z) points
+    """
+    h, w = depth_image.shape
+    
+    # Create pixel coordinate grid
+    u, v = np.meshgrid(np.arange(w), np.arange(h))
+    
+    # Extract intrinsics
+    fx = camera_matrix[0, 0]
+    fy = camera_matrix[1, 1]
+    cx = camera_matrix[0, 2]
+    cy = camera_matrix[1, 2]
+    
+    # Backproject to 3D
+    z = depth_image
+    x = (u - cx) * z / fx
+    y = (v - cy) * z / fy
+    
+    # Stack into point cloud
+    points = np.stack([x, y, z], axis=-1)
+    
+    # Filter invalid depths
+    valid = z > 0
+    pointcloud = points[valid]
+    
+    return pointcloud
+```
+
+### ROS 2 Point Cloud Publishing
+
+```python
+from sensor_msgs.msg import PointCloud2, PointField
+import sensor_msgs_py.point_cloud2 as pc2
+
+class PointCloudPublisher(Node):
+    def __init__(self):
+        super().__init__('pointcloud_publisher')
+        
+        self.pub = self.create_publisher(PointCloud2, '/points', 10)
+        
+        self.depth_sub = self.create_subscription(
+            Image, '/camera/depth/image', self.depth_callback, 10
+        )
+        self.info_sub = self.create_subscription(
+            CameraInfo, '/camera/camera_info', self.info_callback, 10
+        )
+        
+        self.camera_matrix = None
+    
+    def info_callback(self, msg):
+        self.camera_matrix = np.array(msg.k).reshape((3, 3))
+    
+    def depth_callback(self, msg):
+        if self.camera_matrix is None:
+            return
+        
+        # Convert to numpy
+        depth = self.bridge.imgmsg_to_cv2(msg, desired_encoding='passthrough')
+        
+        # Generate point cloud
+        points = depth_to_pointcloud(depth, self.camera_matrix)
+        
+        # Convert to ROS message
+        header = msg.header
+        pc_msg = pc2.create_cloud_xyz32(header, points)
+        
+        self.pub.publish(pc_msg)
+```
+
+## Applications
+
+### Object Detection in 3D
+
+```python
+def get_3d_bounding_box(depth_image, bbox_2d, camera_matrix):
+    """
+    Get 3D bounding box from 2D detection.
+    
+    Args:
+        bbox_2d: (x_min, y_min, x_max, y_max) in pixels
+        depth_image: Depth image
+        camera_matrix: Camera intrinsics
+    
+    Returns:
+        center_3d: (x, y, z) in meters
+        size_3d: (width, height, depth) in meters
+    """
+    x_min, y_min, x_max, y_max = bbox_2d
+    
+    # Extract depth ROI
+    depth_roi = depth_image[y_min:y_max, x_min:x_max]
+    
+    # Get median depth (robust to outliers)
+    depth = np.median(depth_roi[depth_roi > 0])
+    
+    # Backproject bbox corners
+    corners_2d = np.array([
+        [x_min, y_min],
+        [x_max, y_min],
+        [x_min, y_max],
+        [x_max, y_max]
+    ])
+    
+    corners_3d = []
+    for u, v in corners_2d:
+        x = (u - camera_matrix[0, 2]) * depth / camera_matrix[0, 0]
+        y = (v - camera_matrix[1, 2]) * depth / camera_matrix[1, 1]
+        corners_3d.append([x, y, depth])
+    
+    corners_3d = np.array(corners_3d)
+    
+    # Compute center and size
+    center_3d = np.mean(corners_3d, axis=0)
+    size_3d = np.max(corners_3d, axis=0) - np.min(corners_3d, axis=0)
+    
+    return center_3d, size_3d
+```
+
+### Visual Servoing
+
+Use the camera for closed-loop control:
+
+```python
+class VisualServo(Node):
+    def __init__(self):
+        super().__init__('visual_servo')
+        
+        self.cmd_pub = self.create_publisher(Twist, '/cmd_vel', 10)
+        self.det_sub = self.create_subscription(
+            Detection2DArray, '/detections', self.detection_callback, 10
+        )
+        
+        self.target_object = 'cup'
+        self.image_center_x = 640 / 2  # Image width / 2
+    
+    def detection_callback(self, msg):
+        """Servo toward detected object."""
+        for detection in msg.detections:
+            if detection.results[0].id == self.target_object:
+                # Get object center
+                bbox = detection.bbox
+                object_center_x = bbox.center.x
+                
+                # Compute error
+                error = object_center_x - self.image_center_x
+                
+                # Proportional control
+                angular_velocity = -0.001 * error  # Negative for right turn
+                
+                # Publish command
+                twist = Twist()
+                twist.linear.x = 0.2  # Move forward
+                twist.angular.z = angular_velocity
+                self.cmd_pub.publish(twist)
+                
+                return
+        
+        # No detection, stop
+        self.cmd_pub.publish(Twist())
+```
+
+## Best Practices
+
+### 1. Handle Missing Depth
+
+Some pixels may have invalid depth (reflective surfaces, too far):
+
+```python
+# Filter invalid depths
+valid = (depth > 0) & (depth < 10.0)
+valid_points = points[valid]
+```
+
+### 2. Temporal Filtering
+
+Depth can be noisy. Use temporal averaging:
+
+```python
+from collections import deque
+
+class TemporalFilter:
+    def __init__(self, window_size=5):
+        self.buffer = deque(maxlen=window_size)
+    
+    def filter(self, depth_image):
+        self.buffer.append(depth_image)
+        return np.median(np.array(self.buffer), axis=0)
+```
+
+### 3. Align Depth to RGB
+
+Ensure depth and RGB are aligned:
+
+```bash
+# RealSense automatically aligns if you use:
+ros2 run realsense2_camera realsense2_camera_node \
+  --ros-args -p align_depth.enable:=true
+```
+
+## Summary
+
+RGB-D cameras are essential sensors for humanoid robots, enabling 3D perception at low cost. Understanding calibration, point cloud generation, and practical applications is key to effective use.
+
+**Next**: [Hardware: Workstations](/docs/hardware/workstations)

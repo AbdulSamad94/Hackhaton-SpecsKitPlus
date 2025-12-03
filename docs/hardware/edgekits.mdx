@@ -1,0 +1,27 @@
+# Edge Computing Kits
+
+## NVIDIA Jetson Orin
+
+The **Jetson AGX Orin** is the brain of modern humanoids. It provides server-class AI performance at the edge.
+
+### Setup Guide
+
+1.  **Flash JetPack**: Use NVIDIA SDK Manager to flash JetPack 6.0 (Ubuntu 22.04).
+2.  **Install ROS 2**: Follow the standard Ubuntu install instructions (arm64).
+3.  **Power Mode**: Set to `MAXN` for maximum performance.
+    ```bash
+    sudo nvpmodel -m 0
+    sudo jetson_clocks
+    ```
+
+## Integrating RealSense
+
+Connect the RealSense camera to a USB 3.0 port.
+
+**Troubleshooting**:
+-   If the camera is not detected, check the USB cable quality.
+-   Ensure `udev` rules are installed (`sudo apt install librealsense2-utils`).
+
+## Thermal Management
+
+The Orin can get hot! Ensure proper airflow or use the active cooling fan mode.

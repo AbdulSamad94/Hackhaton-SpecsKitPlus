@@ -1,0 +1,357 @@
+---
+sidebar_position: 1
+---
+
+# Chapter 1: NVIDIA Isaac Sim & Reinforcement Learning
+
+## Learning Objectives
+
+- Understand Isaac Sim architecture and capabilities
+- Set up Isaac Gym for massively parallel RL training
+- Create custom humanoid environments
+- Train locomotion policies using PPO
+- Visualize and debug training progress
+
+## 1.1 Introduction to Isaac Sim
+
+### What Makes Isaac Sim Special?
+
+**NVIDIA Isaac Sim** is built on **Omniverse**, providing industry-leading simulation for robotics:
+
+| Feature | Traditional Sim | Isaac Sim |
+|---------|----------------|-----------|
+| **Rendering** | Rasterization | RTX Ray Tracing |
+| **Physics** | Bullet/ODE | PhysX 5 |
+| **Scale** | Single robot | Thousands in parallel |
+| **Data Generation** | Manual | Synthetic Data Replicator |
+| **Integration** | Limited | ROS 2, Streaming, USD |
+
+### Key Capabilities
+
+#### 1. Photorealistic Rendering (RTX)
+- Ray-traced reflections and shadows
+- Physically-based materials (PBR)
+- DLSS for real-time performance
+- Perfect for training vision models
+
+#### 2. PhysX 5 Physics
+- GPU-accelerated rigid body dynamics
+- Accurate contact modeling for bipedal locomotion
+- Soft body simulation for deformable objects
+- Fluid simulation
+
+#### 3. ROS 2 Integration
+- Native ROS 2 bridge (no middleware lag)
+- Message passthrough with minimal overhead
+- Clock synchronization
+
+### Installation
+
+```bash
+# Download from Nvidia (requires RTX GPU)
+# https://developer.nvidia.com/isaac-sim
+
+# Launcher installation
+./omniverse-launcher-linux.AppImage
+
+# Install Isaac Sim via Omniverse launcher
+# Then activate ROS 2 extension
+```
+
+## 1.2 Isaac Gym for Reinforcement Learning
+
+### The Problem with Sequential Training
+
+Traditional RL trains one robot at a time:
+- Agent takes action
+- Environment steps forward  
+- Wait for physics
+- Collect reward
+- Repeat 1 million times ⏱️
+
+**Result**: Training takes days/weeks.
+
+### Isaac Gym's Solution: Massively Parallel Simulation
+
+```
+Single GPU runs 4096 humanoid environments simultaneously
+↓
+Each environment: 30 DOF, contact-rich dynamics
+↓
+Update ALL environments in parallel
+↓
+10,000x speedup vs CPU
+↓
+Learn to walk in 2 hours instead of 2 weeks
+```
+
+### Architecture
+
+```python
+# Pseudocode architecture
+class IsaacGymEnv:
+    def __init__(self, num_envs=4096):
+        self.create_sim_on_gpu()
+        self.spawn_robots(num_envs)  # All on GPU
+        
+    def step(self, actions):
+        # All 4096 robots step in parallel
+        self.sim.step_physics()  # GPU kernel
+        observations = self.get_obs()  # No CPU transfer!
+        rewards = self.compute_rewards()
+        return observations, rewards
+```
+
+## 1.3 Creating a Humanoid Environment
+
+### Environment Class Structure
+
+```python title="envs/humanoid_walk.py"
+from isaacgym import gymapi, gymtorch
+import torch
+
+class HumanoidWalkEnv:
+    """
+    Train a humanoid to walk forward.
+    """
+    
+    def __init__(self, num_envs=2048):
+        self.num_envs = num_envs
+        self.device = 'cuda:0'
+        
+        # Create gym instance
+        self.gym = gymapi.acquire_gym()
+        
+        # Configure simulation
+        sim_params = gymapi.SimParams()
+        sim_params.dt = 1.0 / 60.0  # 60 Hz
+        sim_params.substeps = 2
+        sim_params.up_axis = gymapi.UP_AXIS_Z
+        sim_params.gravity = gymapi.Vec3(0, 0, -9.81)
+        
+        # Physics engine settings
+        sim_params.physx.solver_type = 1
+        sim_params.physx.num_position_iterations = 4
+        sim_params.physx.num_velocity_iterations = 1
+        sim_params.physx.contact_offset = 0.01
+        sim_params.physx.rest_offset = 0.0
+        
+        # Create simulation
+        self.sim = self.gym.create_sim(
+            0, 0, gymapi.SIM_PHYSX, sim_params
+        )
+        
+        # Create environments
+        self.envs = []
+        self.actors = []
+        
+        env_spacing = 3.0  # 3 meters between robots
+        env_lower = gymapi.Vec3(-env_spacing, -env_spacing, 0)
+        env_upper = gymapi.Vec3(env_spacing, env_spacing, env_spacing)
+        
+        for i in range(num_envs):
+            env = self.gym.create_env(self.sim, env_lower, env_upper, 8)
+            self.envs.append(env)
+            
+            # Load humanoid URDF
+            asset_root = "assets"
+            asset_file = "humanoid.urdf"
+            
+            asset_options = gymapi.AssetOptions()
+            asset_options.fix_base_link = False
+            asset_options.default_dof_drive_mode = gymapi.DOF_MODE_EFFORT
+            
+            humanoid_asset = self.gym.load_asset(
+                self.sim, asset_root, asset_file, asset_options
+            )
+            
+            # Spawn robot
+            pose = gymapi.Transform()
+            pose.p = gymapi.Vec3(0, 0, 1.0)  # 1m above ground
+            pose.r = gymapi.Quat(0, 0, 0, 1)
+            
+            actor = self.gym.create_actor(
+                env, humanoid_asset, pose, f"humanoid{i}", i, 1
+            )
+            self.actors.append(actor)
+        
+        # Create viewer
+        self.viewer = self.gym.create_viewer(self.sim, gymapi.CameraProperties())
+        
+        # Prepare tensors (all on GPU!)
+        self.gym.prepare_sim(self.sim)
+        
+        # Get tensor pointers
+        self.root_states = self.gym.acquire_actor_root_state_tensor(self.sim)
+        self.dof_states = self.gym.acquire_dof_state_tensor(self.sim)
+        self.dof_forces = self.gym.acquire_dof_force_tensor(self.sim)
+        
+        # Wrap in PyTorch
+        self.root_states = gymtorch.wrap_tensor(self.root_states)
+        self.dof_states = gymtorch.wrap_tensor(self.dof_states)
+        self.dof_forces = gymtorch.wrap_tensor(self.dof_forces)
+        
+        # DOF: 30 (typical humanoid)
+        self.num_dofs = 30
+    
+    def reset(self):
+        """Reset all environments."""
+        # Random initial poses
+        self.root_states[:, :3] = 0  # Position
+        self.root_states[:, 2] = 1.0  # Height
+        self.root_states[:, 7:10] = 0  # Linear velocity
+        self.root_states[:, 10:13] = 0  # Angular velocity
+        
+        # Random joint positions
+        self.dof_states[:, 0] = torch.rand(
+            self.num_envs * self.num_dofs, device=self.device
+        ) * 0.4 - 0.2  # ±0.2 rad
+        
+        # Apply changes
+        self.gym.set_actor_root_state_tensor(
+            self.sim, gymtorch.unwrap_tensor(self.root_states)
+        )
+        self.gym.set_dof_state_tensor(
+            self.sim, gymtorch.unwrap_tensor(self.dof_states)
+        )
+        
+        return self.get_observations()
+    
+    def step(self, actions):
+        """
+        Apply actions and step physics.
+        
+        Args:
+            actions: (num_envs, num_dofs) tensor of torques
+        """
+        # Apply torques
+        self.dof_forces[:] = actions.flatten()
+        self.gym.set_dof_actuation_force_tensor(
+            self.sim, gymtorch.unwrap_tensor(self.dof_forces)
+        )
+        
+        # Step simulation
+        self.gym.simulate(self.sim)
+        self.gym.fetch_results(self.sim, True)
+        
+        # Observations and rewards
+        obs = self.get_observations()
+        rewards = self.compute_rewards()
+        dones = self.check_termination()
+        
+        return obs, rewards, dones, {}
+    
+    def get_observations(self):
+        """
+        Get state observations for all robots.
+        
+        Returns:
+            (num_envs, obs_dim) tensor
+        """
+        # Root state: pos, rot, lin_vel, ang_vel
+        # DOF state: positions, velocities
+        
+        obs = torch.cat([
+            self.root_states[:, :13],  # Root: 13 dims
+            self.dof_states[:, 0],     # Positions: 30 dims
+            self.dof_states[:, 1],     # Velocities: 30 dims
+        ], dim=-1)
+        
+        return obs
+    
+    def compute_rewards(self):
+        """
+        Reward function for walking.
+        """
+        # Forward velocity reward
+        forward_vel = self.root_states[:, 7]  # x velocity
+        vel_reward = forward_vel
+        
+        # Height penalty (discourage crouching)
+        height = self.root_states[:, 2]
+        height_penalty = -torch.abs(height - 1.0)
+        
+        # Energy penalty (discourage wasteful movements)
+        energy = torch.sum(torch.abs(self.dof_forces), dim=-1)
+        energy_penalty = -0.001 * energy
+        
+        # Orientation penalty (stay upright)
+        quat = self.root_states[:, 3:7]
+        up_vec = torch.tensor([0, 0, 1], device=self.device)
+        robot_up = quat_rotate(quat, up_vec)
+        upright_reward = robot_up[:, 2]  # z-component
+        
+        # Total reward
+        reward = vel_reward + 0.5 * height_penalty + energy_penalty + upright_reward
+        
+        return reward
+    
+    def check_termination(self):
+        """Check which episodes are done."""
+        # Terminate if fallen (height < 0.5m)
+        height = self.root_states[:, 2]
+        dones = height < 0.5
+        
+        return dones
+```
+
+## 1.4 Training with PPO
+
+### Using RL Libraries
+
+```python title="train.py"
+from envs.humanoid_walk import HumanoidWalkEnv
+import torch
+from torch.optim import Adam
+
+# Create environment
+env = HumanoidWalkEnv(num_envs=4096)
+
+# Simple policy network
+class Policy(torch.nn.Module):
+    def __init__(self, obs_dim, act_dim):
+        super().__init__()
+        self.fc1 = torch.nn.Linear(obs_dim, 256)
+        self.fc2 = torch.nn.Linear(256, 256)
+        self.fc3 = torch.nn.Linear(256, act_dim)
+    
+    def forward(self, obs):
+        x = torch.relu(self.fc1(obs))
+        x = torch.relu(self.fc2(x))
+        return torch.tanh(self.fc3(x))  # Actions in [-1, 1]
+
+policy = Policy(obs_dim=73, act_dim=30).cuda()
+optimizer = Adam(policy.parameters(), lr=3e-4)
+
+# Training loop
+for iteration in range(1000):
+    obs = env.reset()
+    
+    for step in range(100):
+        actions = policy(obs)
+        obs, rewards, dones, _ = env.step(actions)
+        
+        # PPO update (simplified)
+        # In reality, you'd use a library like rl_games or stable-baselines3
+    
+    print(f"Iteration {iteration}, Mean Reward: {rewards.mean().item()}")
+```
+
+### Monitoring Training
+
+```bash
+# TensorBoard
+tensorboard --logdir runs/
+
+# Watch in Isaac Sim viewer
+# Press F8 to toggle camera smoothing
+```
+
+## Summary
+
+✅ Understand Isaac Sim's photorealistic rendering and physics  
+✅ Set up Isaac Gym for parallel RL training  
+✅ Create custom humanoid environments  
+✅ Train locomotion policies  
+
+**Next**: [Chapter 2: Isaac ROS & Sim-to-Real](/docs/modules/module3-nvidia-isaac/chapter2)

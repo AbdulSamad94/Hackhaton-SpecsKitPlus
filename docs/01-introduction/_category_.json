@@ -1,8 +1,0 @@
-{
-  "label": "Introduction",
-  "position": 1,
-  "link": {
-    "type": "generated-index",
-    "description": "Welcome to Mastering Next.js! This comprehensive guide will take you from a complete beginner to an advanced Next.js developer."
-  }
-}

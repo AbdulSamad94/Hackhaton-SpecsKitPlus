@@ -1,0 +1,8 @@
+{
+  "label": "Labs",
+  "position": 5,
+  "link": {
+    "type": "generated-index",
+    "description": "Hands-on exercises for each week."
+  }
+}

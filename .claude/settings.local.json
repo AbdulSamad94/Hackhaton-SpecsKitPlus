@@ -12,7 +12,8 @@
       "Bash(findstr:*)",
       "Bash(taskkill:*)",
       "Bash(powershell:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(ls:*)"
     ],
     "deny": [],
     "ask": []

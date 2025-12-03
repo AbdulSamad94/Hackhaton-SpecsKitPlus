@@ -1,0 +1,344 @@
+---
+sidebar_position: 1
+---
+
+# Chapter 1: Vision-Language-Action Models
+
+## Learning Objectives
+
+- Understand the VLA paradigm and its impact on robotics
+- Explore foundational models: RT-2, PaLM-E, Pi0
+- Implement a simple VLA inference pipeline
+- Integrate with existing robot control systems
+- Understand limitations and deployment challenges
+
+## 1.1 The VLA Revolution
+
+### The Traditional Robotics Stack
+
+```
+Human writes code → Robot executes specific behavior
+```
+
+Problems:
+- Every task needs custom code
+- No generalization across tasks
+- Requires robotics expertise
+
+### The VLA Paradigm
+
+```
+Human gives instruction → VLA model reasons → Robot executes
+```
+
+Benefits:
+- Natural language interface
+- Generalization to unseen tasks
+- Anyone can command the robot
+
+## 1.2 Foundational VLA Models
+
+### RT-2 (Robotic Transformer 2)
+
+**Google DeepMind, 2023**
+
+- Trained on 13 robots, 130,000 episodes
+- Combines vision encoder (ViT) + language model (PaLM)
+- Outputs discretized robot actions (256 bins)
+- 3x better generalization than RT-1
+
+```python
+# RT-2 Architecture (simplified)
+class RT2:
+    def __init__(self):
+        self.vision_encoder = ViT()  # Vision Transformer
+        self.language_model = PaLM()  # Large LM
+        self.action_decoder = TokenToAction()
+    
+    def forward(self, image, instruction):
+        # Encode image
+        vis_tokens = self.vision_encoder(image)
+        
+        # Encode instruction
+        lang_tokens = self.language_model.encode(instruction)
+        
+        # Combine modalities
+        combined = concat([vis_tokens, lang_tokens])
+        
+        # Generate action tokens
+        action_tokens = self.language_model.generate(combined)
+        
+        # Decode to continuous actions
+        actions = self.action_decoder(action_tokens)
+        
+        return actions
+```
+
+### PaLM-E (562B parameters)
+
+**Google, 2023**
+
+- Multimodal embodied AI
+- Incorporates sensor data (vision, proprioception, depth)
+- "Embodied language model"
+- Can reason about physical world
+
+**Example**:
+```
+Input: Image of messy table + "Clean up the red items"
+Output: Step-by-step plan with 3D coordinates
+```
+
+### Open-Source Alternatives
+
+#### OpenVLA (7B parameters)
+- MIT/Berkeley collaboration
+- Trained on Open X-Embodiment dataset
+- Apache 2.0 license (fully open!)
+
+```bash
+# Installation
+pip install openvla
+
+# Inference
+from openvla import VLAModel
+
+model = VLAModel.from_pretrained("openvla-7b")
+action = model.predict(image, "pick up the blue cup")
+```
+
+## 1.3 How VLA Models Work
+
+### Input Processing
+
+```python
+def prepare_vla_input(camera_image, instruction, robot_state):
+    """
+    Prepare multimodal input for VLA model.
+    """
+    # Vision: RGB image (224x224)
+    image_tensor = preprocess_image(camera_image)
+    
+    # Language: Tokenize instruction
+    text_tokens = tokenizer(instruction)
+    
+    # Proprioception: Joint angles, gripper state
+    proprio = torch.tensor([
+        robot_state.joint_positions,  # 7 dims (arm)
+        robot_state.gripper_width,    # 1 dim
+    ])
+    
+    return {
+        'image': image_tensor,
+        'text': text_tokens,
+        'proprio': proprio
+    }
+```
+
+### Action Output
+
+VLA models typically output:
+1. **End-effector pose change** (δx, δy, δz, δroll, δpitch, δyaw)
+2. **Gripper command** (open/close)
+
+```python
+def execute_vla_action(robot, vla_output):
+    """
+    Convert VLA output to robot commands.
+    """
+    # Parse output
+    delta_pose = vla_output[:6]  # Position + orientation changes
+    gripper_cmd = vla_output[6]  # Open (>0.5) or close
+    
+    # Get current pose
+    current_pose = robot.get_end_effector_pose()
+    
+    # Compute target pose
+    target_pose = current_pose + delta_pose * 0.01  # Scale for safety
+    
+    # Execute
+    robot.move_to_pose(target_pose)
+    
+    if gripper_cmd > 0.5:
+        robot.open_gripper()
+    else:
+        robot.close_gripper()
+```
+
+## 1.4 Practical Implementation
+
+### ROS 2 VLA Node
+
+```python title="vla_node.py"
+import rclpy
+from rclpy.node import Node
+from sensor_msgs.msg import Image
+from std_msgs.msg import String
+from geometry_msgs.msg import Twist
+from cv_bridge import CvBridge
+import torch
+from transformers import AutoModel, AutoTokenizer
+
+class VLAControlNode(Node):
+    def __init__(self):
+        super().__init__('vla_control')
+        
+        # Load model
+        self.get_logger().info('Loading VLA model...')
+        self.model = AutoModel.from_pretrained("openvla-7b")
+        self.tokenizer = AutoTokenizer.from_pretrained("openvla-7b")
+        self.model.eval()
+        self.model.cuda()
+        
+        # Subscribers
+        self.image_sub = self.create_subscription(
+            Image, '/camera/color/image_raw', self.image_callback, 10
+        )
+        self.instruction_sub = self.create_subscription(
+            String, '/vla/instruction', self.instruction_callback, 10
+        )
+        
+        # Publishers
+        self.action_pub = self.create_publisher(Twist, '/cmd_vel', 10)
+        
+        # State
+        self.latest_image = None
+        self.bridge = CvBridge()
+    
+    def image_callback(self, msg):
+        """Store latest camera image."""
+        self.latest_image = self.bridge.imgmsg_to_cv2(msg, 'rgb8')
+    
+    def instruction_callback(self, msg):
+        """Process instruction and execute action."""
+        if self.latest_image is None:
+            self.get_logger().warn('No camera image available')
+            return
+        
+        instruction = msg.data
+        self.get_logger().info(f'Executing: {instruction}')
+        
+        # Prepare input
+        image_tensor = self.preprocess_image(self.latest_image)
+        text_tokens = self.tokenizer(
+            instruction, return_tensors='pt'
+        ).to('cuda')
+        
+        # Inference
+        with torch.no_grad():
+            output = self.model(
+                pixel_values=image_tensor,
+                input_ids=text_tokens['input_ids']
+            )
+        
+        # Extract action (model-specific)
+        action = output.logits[0].cpu().numpy()
+        
+        # Convert to robot command
+        cmd = Twist()
+        cmd.linear.x = float(action[0])  # Forward velocity
+        cmd.angular.z = float(action[1])  # Angular velocity
+        
+        self.action_pub.publish(cmd)
+    
+    def preprocess_image(self, image):
+        """Preprocess image for VLA model."""
+        import cv2
+        import torchvision.transforms as T
+        
+        # Resize
+        image = cv2.resize(image, (224, 224))
+        
+        # Normalize
+        transform = T.Compose([
+            T.ToTensor(),
+            T.Normalize(mean=[0.485, 0.456, 0.406],
+                       std=[0.229, 0.224, 0.225])
+        ])
+        
+        return transform(image).unsqueeze(0).cuda()
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = VLAControlNode()
+    rclpy.spin(node)
+    rclpy.shutdown()
+```
+
+## 1.5 Challenges & Limitations
+
+### 1. Latency
+
+- Large models are slow (~500ms per inference)
+- Unsuitable for fast reactive control
+- **Solution**: Use VLA for high-level planning, PID for low-level control
+
+### 2. Hallucinations in Action Space
+
+- Models can output physically impossible actions
+- **Solution**: Add safety constraints and validation
+
+```python
+def validate_action(action, limits):
+    """Clip actions to safe range."""
+    return np.clip(action, limits['min'], limits['max'])
+```
+
+### 3. Out-of-Distribution Scenarios
+
+- Models fail on tasks far from training data
+- **Solution**: Fine-tune on your specific robot/environment
+
+### 4. Compute Requirements
+
+- 7B model needs ~16GB VRAM
+- Too large for Jetson Orin (32GB total RAM)
+- **Solution**: Model quantization or distillation
+
+```python
+# INT8 quantization
+from transformers import BitsAndBytesConfig
+
+quantization_config = BitsAndBytesConfig(load_in_8bit=True)
+model = AutoModel.from_pretrained(
+    "openvla-7b",
+    quantization_config=quantization_config
+)
+```
+
+## 1.6 Data Collection for Fine-Tuning
+
+### Teleoperation Setup
+
+```python
+class TeleopRecorder(Node):
+    def __init__(self):
+        super().__init__('teleop_recorder')
+        
+        # Record camera + actions
+        self.recordings = []
+        
+        self.image_sub = self.create_subscription(
+            Image, '/camera/image', self.record_image, 10
+        )
+        self.joy_sub = self.create_subscription(
+            Joy, '/joy', self.record_action, 10
+        )
+    
+    def record_episode(self):
+        """Save episode to disk."""
+        import pickle
+        with open(f'episode_{len(self.recordings)}.pkl', 'wb') as f:
+            pickle.dump(self.recordings, f)
+        
+        self.recordings = []
+```
+
+## Summary
+
+✅ Understand VLA models and their transformative potential  
+✅ Explore RT-2, PaLM-E, and OpenVLA  
+✅ Implement VLA inference in ROS 2  
+✅ Address practical deployment challenges  
+
+**Next**: [Chapter 2: Whisper & Cognitive Planning](/docs/modules/module4-vla/chapter2)

@@ -1,8 +1,0 @@
-{
-  "label": "Routing",
-  "position": 2,
-  "link": {
-    "type": "generated-index",
-    "description": "Next.js uses a file-system based router where folders are used to define routes."
-  }
-}
