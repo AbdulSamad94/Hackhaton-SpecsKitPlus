@@ -1,0 +1,273 @@
+# Capstone Project: Autonomous Humanoid with Conversational AI
+
+## Project Overview
+
+Your final project synthesizes everything you've learned to build a **fully autonomous humanoid robot** that can:
+
+1. **Understand** natural language commands via speech
+2. **Plan** complex tasks using AI reasoning
+3. **Navigate** autonomously in a home environment
+4. **Manipulate** objects safely
+5. **Interact** naturally with humans
+
+### Success Criteria
+
+Your robot must complete this scenario:
+
+> **Scenario**: User is sitting in the living room and says: _"I'm feeling cold and hungry. Can you help?"_
+>
+> **Expected Behavior**:
+>
+> 1. Robot understands the compound request
+> 2. Plans to fetch blanket AND snack
+> 3. Navigates to bedroom, retrieves blanket
+> 4. Navigates to kitchen, retrieves snack
+> 5. Returns to user, hands over items
+> 6. Confirms verbally: _"Here's a blanket and a snack. Anything else?"_
+
+## System Architecture
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                     User Interface                       │
+│                  (Speech Input/Output)                   │
+└───────────────────────────┬─────────────────────────────┘
+                            │
+┌───────────────────────────▼─────────────────────────────┐
+│               Cognitive Layer (LLM)                      │
+│    ┌─────────────┐   ┌──────────────┐   ┌───────────┐  │
+│    │   Whisper   │──▶│     GPT-4    │──▶│  Planner  │  │
+│    │   (Speech)  │   │  (Reasoning) │   │ (Actions) │  │
+│    └─────────────┘   └──────────────┘   └───────────┘  │
+└───────────────────────────┬─────────────────────────────┘
+                            │
+┌───────────────────────────▼─────────────────────────────┐
+│              Perception Layer (Isaac ROS)                │
+│    ┌────────────┐  ┌──────────────┐  ┌──────────────┐  │
+│    │  cuVSLAM   │  │    nvBlox    │  │   YOLOv8     │  │
+│    │ (Odometry) │  │    (3D Map)  │  │  (Objects)   │  │
+│    └────────────┘  └──────────────┘  └──────────────┘  │
+└───────────────────────────┬─────────────────────────────┘
+                            │
+┌───────────────────────────▼─────────────────────────────┐
+│                Control Layer (ROS 2)                     │
+│    ┌────────────┐  ┌──────────────┐  ┌──────────────┐  │
+│    │    Nav2    │  │   MoveIt 2   │  │  Joint Ctrl  │  │
+│    │  (Motion)  │  │(Manipulation)│  │   (Low-lvl)  │  │
+│    └────────────┘  └──────────────┘  └──────────────┘  │
+└───────────────────────────┬─────────────────────────────┘
+                            │
+┌───────────────────────────▼─────────────────────────────┐
+│              Hardware Layer (Jetson/Motors)              │
+│           Sensors: RealSense, LiDAR, IMU                │
+│         Actuators: 30+ servo motors                      │
+└─────────────────────────────────────────────────────────┘
+```
+
+## Milestones (8 Weeks)
+
+### Week 1-2: Foundation & Navigation
+
+**Goal**: Robot can navigate a mapped environment
+
+**Tasks**:
+
+1. Import humanoid URDF into Isaac Sim
+2. Set up ROS 2 bridge
+3. Configure cuVSLAM for odometry
+4. Build 3D map with nvBlox
+5. Deploy Nav2 for path planning
+
+**Deliverable**: Video showing robot navigating from living room → kitchen → bedroom
+
+**Resources**:
+
+- [Isaac Sim ROS 2 Tutorial](https://docs.nvidia.com/isaac/doc/tutorials/ros_navigation.html)
+- [Nav2 Getting Started](https://navigation.ros.org/)
+
+---
+
+### Week 3-4: Perception & Object Detection
+
+**Goal**: Robot can detect and localize objects
+
+**Tasks**:
+
+1. Train YOLOv8 on household objects (cup, blanket, remote, etc.)
+2. Integrate camera feed with ROS 2
+3. Publish detected objects with 3D poses
+4. Create a semantic map (object locations)
+
+**Deliverable**: Screenshot showing labeled objects in RViz with 3D bounding boxes
+
+---
+
+### Week 5-6: VLA Integration
+
+**Goal**: Robot understands natural language and plans tasks
+
+**Tasks**:
+
+1. Integrate Whisper for speech-to-text
+2. Connect GPT-4 for task planning
+3. Build action executor (translate plans to ROS)
+4. Test compound requests
+
+**Deliverable**: Terminal log showing complete plan execution
+
+---
+
+### Week 7: Manipulation
+
+**Goal**: Robot can pick and place objects
+
+**Tasks**:
+
+1. Set up MoveIt 2 for arm control
+2. Compute inverse kinematics
+3. Plan grasp poses
+4. Execute pick-and-place
+
+**Deliverable**: Video of robot grasping a cup in simulation
+
+---
+
+### Week 8: Integration & Testing
+
+**Goal**: Complete end-to-end demo
+
+**Tasks**:
+
+1. Integrate all subsystems
+2. Create demo environment in Isaac Sim (living room + kitchen)
+3. Run full scenario 10 times
+4. Measure success rate
+5. Debug failures
+6. Record final demo video
+
+**Metrics**:
+| Metric | Target |
+|--------|--------|
+| Navigation success | &gt;90% |
+| Object detection recall | &gt;85% |
+| Grasp success | &gt;70% |
+| Full task completion | &gt;60% |
+| Average time | under 5 min |
+
+**Deliverable**:
+
+- 3-minute demo video
+- Written report (5 pages)
+- Code repository link
+
+---
+
+## Evaluation Rubric (100 points)
+
+### Technical Implementation (60 points)
+
+- **Navigation (15 pts)**
+
+  - Collision-free path planning
+  - Dynamic obstacle avoidance
+  - Accurate localization
+
+- **Perception (15 pts)**
+
+  - Object detection accuracy
+  - 3D pose estimation
+  - Semantic understanding
+
+- **VLA Integration (15 pts)**
+
+  - Speech recognition quality
+  - Task planning coherence
+  - Natural language understanding
+
+- **Manipulation (15 pts)**
+  - Grasp stability
+  - Motion planning smoothness
+  - Safety (no collisions)
+
+### System Design (20 points)
+
+- **Architecture (10 pts)**
+
+  - Modular design
+  - Clean interfaces
+  - Error handling
+
+- **Code Quality (10 pts)**
+  - Documentation
+  - Readability
+  - ROS 2 best practices
+
+### Documentation & Presentation (20 points)
+
+- **Report (10 pts)**
+
+  - Clear explanation of approach
+  - Analysis of results
+  - Discussion of limitations
+
+- **Demo Video (10 pts)**
+  - Shows full scenario
+  - Highlights key features
+  - Professional quality
+
+## Getting Started
+
+### 1. Fork the Template
+
+```bash
+git clone https://github.com/YourUsername/humanoid-capstone-template
+cd humanoid-capstone-template
+```
+
+### 2. Set Up Environment
+
+```bash
+# Install dependencies
+sudo apt install ros-humble-isaac-ros-visual-slam ros-humble-isaac-ros-nvblox
+pip install openai whisper ultralytics
+
+# Build workspace
+cd ~/humanoid_ws
+colcon build
+source install/setup.bash
+```
+
+### 3. Run Tests
+
+```bash
+# Test navigation
+ros2 launch humanoid_bringup test_navigation.launch.py
+
+# Test object detection
+ros2 launch humanoid_perception test_detection.launch.py
+
+# Test VLA
+ros2 launch humanoid_vla test_planning.launch.py
+```
+
+## Support
+
+- **Office Hours**: Thursdays 4-6 PM
+- **Discussion Forum**: [GitHub Discussions](https://github.com/course/discussions)
+- **Slack**: #capstone-help
+
+**Good luck building the future of robotics!** 🚀
+
+---
+
+## Submission
+
+**Due**: Week 8, Friday 11:59 PM
+
+**Format**:
+
+1. Code repository (GitHub)
+2. Demo video (YouTube/Vimeo)
+3. Written report (PDF)
+
+**Submit via**: Course portal

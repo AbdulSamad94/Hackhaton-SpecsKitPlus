@@ -1,0 +1,25 @@
+# IMU (Inertial Measurement Unit)
+
+## Importance for Balance
+
+For a humanoid robot, balance is everything. An IMU provides:
+-   **Orientation**: Roll, pitch, yaw (via gyroscope).
+-   **Acceleration**: Linear acceleration (via accelerometer).
+
+## Sensor Fusion
+
+Raw IMU data is noisy and drifts over time. We use **Sensor Fusion** (e.g., Kalman Filters or Madgwick Filters) to combine IMU data with other sensors (like leg odometry) to get a stable state estimate.
+
+## ROS 2 IMU Message
+
+The standard message is `sensor_msgs/Imu`.
+
+```python
+# Accessing orientation quaternion
+orientation = msg.orientation
+x, y, z, w = orientation.x, orientation.y, orientation.z, orientation.w
+```
+
+## Calibration
+
+Always calibrate your IMU before use to remove bias.

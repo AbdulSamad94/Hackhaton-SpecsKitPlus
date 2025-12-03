@@ -1,0 +1,33 @@
+# LiDAR for Humanoids
+
+## What is LiDAR?
+
+Light Detection and Ranging (LiDAR) uses laser pulses to measure distances to objects. For humanoids, LiDAR is crucial for:
+-   **SLAM (Simultaneous Localization and Mapping)**: Building a map of the environment.
+-   **Obstacle Avoidance**: Detecting walls, people, and furniture.
+
+## Types of LiDAR
+
+1.  **2D LiDAR**: Scans a single plane (e.g., RPLIDAR). Good for flat floors.
+2.  **3D LiDAR**: Scans a volume (e.g., Velodyne, Ouster). Essential for humanoids to see overhangs and complex terrain.
+
+## Integrating LiDAR with ROS 2
+
+We typically use the `sensor_msgs/LaserScan` (2D) or `sensor_msgs/PointCloud2` (3D) message types.
+
+```bash
+# Example: Launching a Velodyne driver
+ros2 launch velodyne_driver velodyne_driver_node-VLP16-launch.py
+```
+
+## Processing Point Clouds
+
+We use **PCL (Point Cloud Library)** to filter and segment data.
+
+```cpp
+// C++ snippet to downsample a point cloud
+pcl::VoxelGrid<pcl::PointXYZ> sor;
+sor.setInputCloud(cloud);
+sor.setLeafSize(0.01f, 0.01f, 0.01f);
+sor.filter(*cloud_filtered);
+```

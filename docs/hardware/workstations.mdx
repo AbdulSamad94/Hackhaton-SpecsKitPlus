@@ -1,0 +1,30 @@
+# Hardware Setup: Workstations & Robots
+
+## Workstation Requirements
+
+To run Isaac Sim and train VLA models, you need a powerful workstation.
+
+-   **GPU**: NVIDIA RTX 3080 or higher (RTX 4090 recommended).
+-   **CPU**: AMD Ryzen 9 or Intel Core i9.
+-   **RAM**: 64GB+.
+-   **Storage**: 1TB NVMe SSD.
+
+## Humanoid Robot Platforms
+
+### 1. Unitree H1
+-   **Cost**: ~$90k
+-   **Actuators**: High-torque joint motors.
+-   **Sensors**: 3D LiDAR, Depth Camera.
+
+### 2. Custom Builds (Open Source)
+-   Projects like **Open Dynamic Robot Initiative**.
+-   Lower cost but requires significant assembly and tuning.
+
+## Onboard Compute
+
+The robot itself needs a brain.
+-   **NVIDIA Jetson AGX Orin**: The standard for edge AI in robotics. Delivers up to 275 TOPS.
+
+## Networking
+
+Ensure a robust Wi-Fi 6 router or 5G connection for low-latency telemetry.

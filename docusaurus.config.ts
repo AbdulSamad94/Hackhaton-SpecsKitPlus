@@ -5,8 +5,8 @@ import type * as Preset from '@docusaurus/preset-classic';
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
 const config: Config = {
-  title: 'Mastering Next.js',
-  tagline: 'The Complete Guide to Building Modern Web Applications',
+  title: 'Physical AI & Humanoid Robotics',
+  tagline: 'The Complete Guide to Embodied Intelligence',
   favicon: 'img/favicon.ico',
 
   // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
@@ -15,17 +15,18 @@ const config: Config = {
   },
 
   // Set the production url of your site here
-  url: 'https://your-docusaurus-site.example.com',
+  url: 'https://hackhaton-specs-kit-plus.vercel.app/',
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
   baseUrl: '/',
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
-  organizationName: 'facebook', // Usually your GitHub org/user name.
-  projectName: 'docusaurus', // Usually your repo name.
+  organizationName: 'AbdulSamad94', // Usually your GitHub org/user name.
+  projectName: 'Hackhaton-SpecsKitPlus', // Usually your repo name.
 
   onBrokenLinks: 'throw',
+  onBrokenMarkdownLinks: 'warn',
 
   // Even if you don't use internationalization, you can use this field to set
   // useful metadata like html lang. For example, if your site is Chinese, you
@@ -50,22 +51,7 @@ const config: Config = {
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           editUrl:
-            'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
-        },
-        blog: {
-          showReadingTime: true,
-          feedOptions: {
-            type: ['rss', 'atom'],
-            xslt: true,
-          },
-          // Please change this to your repo.
-          // Remove this to remove the "edit this page" links.
-          editUrl:
-            'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
-          // Useful options to enforce blogging best practices
-          onInlineTags: 'warn',
-          onInlineAuthors: 'warn',
-          onUntruncatedBlogPosts: 'warn',
+            'https://github.com/AbdulSamad94/Hackhaton-SpecsKitPlus/tree/main/',
         },
         theme: {
           customCss: './src/css/custom.css',
@@ -78,17 +64,18 @@ const config: Config = {
     // Replace with your project's social card
     image: 'img/docusaurus-social-card.jpg',
     colorMode: {
+      defaultMode: 'dark',
+      disableSwitch: false,
       respectPrefersColorScheme: true,
     },
     navbar: {
-      title: 'Mastering Next.js',
-
+      title: 'Physical AI & Humanoid Robotics',
       items: [
         {
           type: 'docSidebar',
           sidebarId: 'tutorialSidebar',
           position: 'left',
-          label: 'Book',
+          label: 'Textbook',
         },
         {
           href: 'https://github.com/AbdulSamad94/Hackhaton-SpecsKitPlus',
@@ -101,19 +88,40 @@ const config: Config = {
       style: 'dark',
       links: [
         {
-          title: 'Docs',
+          title: 'Course',
           items: [
             {
               label: 'Introduction',
-              to: '/docs/introduction/what-is-nextjs',
+              to: '/docs/intro',
             },
             {
-              label: 'Routing',
-              to: '/docs/routing/file-based-routing',
+              label: 'Modules',
+              to: '/docs/modules/module1-ros2/chapter1',
             },
             {
-              label: 'Data Fetching',
-              to: '/docs/data-fetching/server-components',
+              label: 'Labs',
+              to: '/docs/labs/week1-exercise1',
+            },
+            {
+              label: 'Capstone',
+              to: '/docs/capstone/project-overview',
+            },
+          ],
+        },
+        {
+          title: 'Resources',
+          items: [
+            {
+              label: 'ROS 2 Docs',
+              href: 'https://docs.ros.org/en/humble/',
+            },
+            {
+              label: 'NVIDIA Isaac',
+              href: 'https://developer.nvidia.com/isaac',
+            },
+            {
+              label: 'Gazebo',
+              href: 'https://gazebosim.org/',
             },
           ],
         },
@@ -121,34 +129,13 @@ const config: Config = {
           title: 'Community',
           items: [
             {
-              label: 'Stack Overflow',
-              href: 'https://stackoverflow.com/questions/tagged/docusaurus',
-            },
-            {
-              label: 'Discord',
-              href: 'https://discordapp.com/invite/docusaurus',
-            },
-            {
-              label: 'Twitter',
-              href: 'https://twitter.com/docusaurus',
-            },
-          ],
-        },
-        {
-          title: 'More',
-          items: [
-            {
-              label: 'Blog',
-              to: '/blog',
-            },
-            {
               label: 'GitHub',
-              href: 'https://github.com/facebook/docusaurus',
+              href: 'https://github.com/AbdulSamad94/Hackhaton-SpecsKitPlus',
             },
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} Mastering Next.js. Built with Docusaurus.`,
+      copyright: `Copyright © ${new Date().getFullYear()} Physical AI & Humanoid Robotics Course. Built with ❤️ using Docusaurus.`,
     },
     prism: {
       theme: prismThemes.github,

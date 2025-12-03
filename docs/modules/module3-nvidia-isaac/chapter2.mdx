@@ -1,0 +1,340 @@
+---
+sidebar_position: 2
+---
+
+# Chapter 2: Isaac ROS & Sim-to-Real Transfer
+
+## Learning Objectives
+
+- Deploy Isaac ROS GEMs for hardware-accelerated perception
+- Implement Visual SLAM with cuVSLAM
+- Use nvBlox for 3D reconstruction
+- Apply domain randomization for sim-to-real transfer
+- Understand and minimize the reality gap
+
+## 2.1 Isaac ROS GEMs
+
+### What are GEMs?
+
+**GEMs (GPU-Enabled Modules)** are highly optimized ROS 2 packages that leverage NVIDIA GPUs for acceleration. They run 10-100x faster than CPU equivalents.
+
+### Key Isaac ROS Packages
+
+| Package | Function | Speedup |
+|---------|----------|---------|
+| `isaac_ros_visual_slam` | Visual odometry & mapping | 50x |
+| `isaac_ros_nvblox` | 3D reconstruction | 30x |
+| `isaac_ros_image_proc` | Image preprocessing | 20x |
+| `isaac_ros_dnn_inference` | Deep learning inference | 100x |
+| `isaac_ros_apriltag` | Fiducial detection | 40x |
+
+### Installation
+
+```bash
+# Add Isaac ROS apt repository
+sudo apt-get install -y curl
+curl -fsSL https://isaac.download.nvidia.com/isaac-ros/repos.key | sudo gpg --dearmor -o /usr/share/keyrings/isaac-ros-archive-keyring.gpg
+
+# Install Isaac ROS packages
+sudo apt-get update
+sudo apt-get install ros-humble-isaac-ros-visual-slam \
+                     ros-humble-isaac-ros-nvblox \
+                     ros-humble-isaac-ros-image-proc
+```
+
+## 2.2 Visual SLAM with cuVSLAM
+
+### What is Visual SLAM?
+
+**Simultaneous Localization and Mapping** using cameras instead of LiDAR:
+- **Localization**: Where am I?
+- **Mapping**: What does the environment look like?
+- **Simultaneous**: Do both at the same time using visual features
+
+### cuVSLAM Architecture
+
+```
+Camera Images → Feature Detection (GPU) → Pose Estimation (GPU) → Map Update
+                      ↓                           ↓
+                 Track Features              Optimize Trajectory
+```
+
+### Launch cuVSLAM
+
+```python title="launch/visual_slam.launch.py"
+from launch import LaunchDescription
+from launch_ros.actions import Node, ComposableNodeContainer
+from launch_ros.descriptions import ComposableNode
+
+def generate_launch_description():
+    
+    visual_slam_node = ComposableNode(
+        name='visual_slam',
+        package='isaac_ros_visual_slam',
+        plugin='nvidia::isaac_ros::visual_slam::VisualSlamNode',
+        parameters=[{
+            'enable_rectified_pose': True,
+            'enable_slam_visualization': True,
+            'enable_landmarks_view': True,
+            'enable_observations_view': True,
+            'map_frame': 'map',
+            'odom_frame': 'odom',
+            'base_frame': 'base_link',
+            'input_camera_infos_topic': ['/camera/infos'],
+            'input_images_topic': ['/camera/images'],
+        }],
+        remappings=[
+            ('visual_slam/tracking/odometry', '/odometry'),
+            ('visual_slam/tracking/vo_pose', '/vo_pose'),
+        ]
+    )
+    
+    visual_slam_container = ComposableNodeContainer(
+        name='visual_slam_container',
+        namespace='',
+        package='rclcpp_components',
+        executable='component_container_mt',
+        composable_node_descriptions=[visual_slam_node],
+        output='screen'
+    )
+    
+    return LaunchDescription([visual_slam_container])
+```
+
+### Consuming SLAM Output
+
+```python
+from nav_msgs.msg import Odometry
+
+class NavigationNode(Node):
+    def __init__(self):
+        super().__init__('navigation_node')
+        
+        self.odom_sub = self.create_subscription(
+            Odometry,
+            '/odometry',
+            self.odom_callback,
+            10
+        )
+    
+    def odom_callback(self, msg):
+        position = msg.pose.pose.position
+        self.get_logger().info(
+            f'Robot at: x={position.x:.2f}, y={position.y:.2f}, z={position.z:.2f}'
+        )
+```
+
+## 2.3 3D Reconstruction with nvBlox
+
+### What is nvBlox?
+
+**nvBlox** builds a 3D voxel representation of the environment in real-time using depth cameras. Perfect for:
+- Collision avoidance
+- Path planning in 3D space
+- Understanding scene geometry
+
+### Data Structures
+
+- **TSDF (Truncated Signed Distance Field)**: Distance to nearest surface
+- **ESDF (Euclidean Signed Distance Field)**: Used for path planning
+- **Occupancy Grid**: Binary occupied/free space
+
+### Launch nvBlox
+
+```python title="launch/nvblox.launch.py"
+from launch import LaunchDescription
+from launch_ros.actions import Node
+
+def generate_launch_description():
+    
+    nvblox_node = Node(
+        package='nvblox_ros',
+        executable='nvblox_node',
+        parameters=[{
+            'global_frame': 'map',
+            'use_depth': True,
+            'use_lidar': False,
+            'voxel_size': 0.05,  # 5cm voxels
+            'esdf_2d': True,     # For 2D navigation
+            'esdf_distance_slice': 1.0,  # Height for slice
+            'mesh_bandwidth': 100000000,  # Mesh streaming rate
+        }],
+        remappings=[
+            ('/depth/image', '/camera/depth/image'),
+            ('/depth/camera_info', '/camera/depth/camera_info'),
+            ('/pose', '/vo_pose')
+        ],
+        output='screen'
+    )
+    
+    return LaunchDescription([nvblox_node])
+```
+
+### Visualizing in RViz
+
+```bash
+ros2 launch nvblox_ros_common nvblox_isaac_sim.launch.py
+
+# In RViz, add:
+# - Marker (for mesh)
+# - Map (for ESDF slice)
+```
+
+## 2.4 Sim-to-Real Transfer
+
+### The Reality Gap
+
+Simulation is imperfect:
+
+| Aspect | Simulation | Reality |
+|--------|-----------|---------|
+| **Physics** | Simplified contact | Complex friction, compliance |
+| **Sensors** | Gaussian noise | Non-Gaussian, systematic errors |
+| **Actuators** | Instant response | Delay, backlash, saturation |
+| **Environment** | Clean, known | Messy, unpredictable |
+
+**Result**: Policies that work in sim fail on real robots.
+
+### Domain Randomization
+
+Randomize simulation parameters during training to force the policy to be robust:
+
+```python title="isaac_gym/domain_randomization.py"
+import numpy as np
+from isaacgym import gymapi
+
+class DomainRandomizer:
+    """
+    Randomizes physics and visual properties in Isaac Gym.
+    """
+    
+    def randomize_physics(self, env, actor):
+        """Randomize mass, friction, damping."""
+        
+        # Get rigid body properties
+        props = env.gym.get_actor_rigid_body_properties(env.envs[0], actor)
+        
+        for prop in props:
+            # Randomize mass ±20%
+            prop.mass *= np.random.uniform(0.8, 1.2)
+            
+            # Randomize friction
+            prop.friction = np.random.uniform(0.5, 1.5)
+            
+            # Randomize damping
+            prop.damping = np.random.uniform(0.0, 0.5)
+        
+        env.gym.set_actor_rigid_body_properties(env.envs[0], actor, props)
+    
+    def randomize_visuals(self, env):
+        """Randomize lighting, textures."""
+        
+        # Randomize light intensity
+        light_intensity = np.random.uniform(0.5, 2.0)
+        env.gym.set_light_parameters(
+            env.sim, 0, gymapi.Vec3(light_intensity, light_intensity, light_intensity)
+        )
+        
+        # Randomize light direction
+        light_dir = gymapi.Vec3(
+            np.random.uniform(-1, 1),
+            np.random.uniform(-1, 1),
+            np.random.uniform(0.5, 1)
+        )
+        env.gym.set_light_direction(env.sim, 0, light_dir)
+    
+    def randomize_observation_noise(self, obs):
+        """Add noise to observations."""
+        
+        # Position noise
+        pos_noise = np.random.normal(0, 0.01, size=3)
+        
+        # Orientation noise
+        ori_noise = np.random.normal(0, 0.05, size=4)
+        
+        # Velocity noise
+        vel_noise = np.random.normal(0, 0.1, size=6)
+        
+        return obs + np.concatenate([pos_noise, ori_noise, vel_noise])
+```
+
+### System Identification
+
+Alternative approach: Measure real robot parameters precisely, then match simulation.
+
+```python title="scripts/system_id.py"
+"""
+System identification for sim-to-real calibration.
+"""
+
+class SystemIdentifier:
+    def measure_motor_parameters(self, robot):
+        """
+        Apply torque and measure response to identify:
+        - Friction (static and dynamic)
+        - Inertia
+        - Gear ratio
+        - Motor constant
+        """
+        pass
+    
+    def measure_link_properties(self, robot):
+        """
+        Use motion capture to measure:
+        - Center of mass
+        - Moments of inertia
+        - Link lengths
+        """
+        pass
+    
+    def calibrate_sensors(self, robot):
+        """
+        Calibrate:
+        - Camera intrinsics/extrinsics
+        - IMU bias and scale
+        - Joint encoder offsets
+        """
+        pass
+```
+
+### Progressive Deployment
+
+1. **Pure Simulation**: Train initial policy
+2. **Simulation + Noise**: Add domain randomization
+3. **Hardware-in-Loop**: Simulate actuators, real sensors
+4. **Real Hardware**: Deploy and fine-tune
+
+## 2.5 Practical Tips
+
+### Debug Tools
+
+```bash
+# Check GPU utilization
+nvidia-smi -l 1
+
+# Profile Isaac ROS nodes
+ros2 run isaac_ros_benchmark isaac_ros_benchmark
+
+# Visualize computation graph
+ros2 run rqt_graph rqt_graph
+```
+
+### Performance Tuning
+
+```python
+# Use zero-copy (intra-process communication)
+rclcpp::NodeOptions options;
+options.use_intra_process_comms(true);
+
+# Pin to specific GPU
+export CUDA_VISIBLE_DEVICES=0
+```
+
+## Summary
+
+✅ Deploy Isaac ROS GEMs for accelerated perception  
+✅ Implement Visual SLAM and 3D reconstruction  
+✅ Apply domain randomization for robust policies  
+✅ Understand sim-to-real challenges  
+
+**Next**: [Module 4: VLA Models](/docs/modules/module4-vla/chapter1)

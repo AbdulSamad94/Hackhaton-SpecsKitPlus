@@ -1,0 +1,20 @@
+# Lab 2: Advanced ROS 2 & URDF
+
+## Objective
+Create a custom URDF for a simple humanoid and visualize it in Rviz2.
+
+## Steps
+
+1.  **Create a Package**:
+    ```bash
+    ros2 pkg create --build-type ament_python my_humanoid_description
+    ```
+2.  **Create URDF**:
+    Create `urdf/humanoid.urdf` with a base link, torso, and head.
+3.  **Create Launch File**:
+    Create `launch/display.launch.py` to launch `robot_state_publisher` and `rviz2`.
+4.  **Visualize**:
+    Run the launch file and verify the TF tree in Rviz2.
+
+## Deliverable
+A screenshot of your humanoid in Rviz2 with the TF tree expanded.

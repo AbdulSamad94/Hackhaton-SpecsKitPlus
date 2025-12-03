@@ -1,8 +1,0 @@
-{
-  "label": "Advanced Patterns",
-  "position": 10,
-  "link": {
-    "type": "generated-index",
-    "description": "Once you've mastered the basics, Next.js offers advanced features for complex applications."
-  }
-}

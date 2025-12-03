@@ -1,8 +1,0 @@
-{
-  "label": "Optimization",
-  "position": 8,
-  "link": {
-    "type": "generated-index",
-    "description": "Next.js provides built-in components and features to improve your application's performance."
-  }
-}
