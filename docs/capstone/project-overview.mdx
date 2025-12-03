@@ -14,15 +14,16 @@ Your final project synthesizes everything you've learned to build a **fully auto
 
 Your robot must complete this scenario:
 
-> **Scenario**: User is sitting in the living room and says: *"I'm feeling cold and hungry. Can you help?"*
+> **Scenario**: User is sitting in the living room and says: _"I'm feeling cold and hungry. Can you help?"_
 >
 > **Expected Behavior**:
+>
 > 1. Robot understands the compound request
 > 2. Plans to fetch blanket AND snack
 > 3. Navigates to bedroom, retrieves blanket
 > 4. Navigates to kitchen, retrieves snack
 > 5. Returns to user, hands over items
-> 6. Confirms verbally: *"Here's a blanket and a snack. Anything else?"*
+> 6. Confirms verbally: _"Here's a blanket and a snack. Anything else?"_
 
 ## System Architecture
 
@@ -70,6 +71,7 @@ Your robot must complete this scenario:
 **Goal**: Robot can navigate a mapped environment
 
 **Tasks**:
+
 1. Import humanoid URDF into Isaac Sim
 2. Set up ROS 2 bridge
 3. Configure cuVSLAM for odometry
@@ -79,6 +81,7 @@ Your robot must complete this scenario:
 **Deliverable**: Video showing robot navigating from living room → kitchen → bedroom
 
 **Resources**:
+
 - [Isaac Sim ROS 2 Tutorial](https://docs.nvidia.com/isaac/doc/tutorials/ros_navigation.html)
 - [Nav2 Getting Started](https://navigation.ros.org/)
 
@@ -89,6 +92,7 @@ Your robot must complete this scenario:
 **Goal**: Robot can detect and localize objects
 
 **Tasks**:
+
 1. Train YOLOv8 on household objects (cup, blanket, remote, etc.)
 2. Integrate camera feed with ROS 2
 3. Publish detected objects with 3D poses
@@ -103,6 +107,7 @@ Your robot must complete this scenario:
 **Goal**: Robot understands natural language and plans tasks
 
 **Tasks**:
+
 1. Integrate Whisper for speech-to-text
 2. Connect GPT-4 for task planning
 3. Build action executor (translate plans to ROS)
@@ -117,6 +122,7 @@ Your robot must complete this scenario:
 **Goal**: Robot can pick and place objects
 
 **Tasks**:
+
 1. Set up MoveIt 2 for arm control
 2. Compute inverse kinematics
 3. Plan grasp poses
@@ -131,6 +137,7 @@ Your robot must complete this scenario:
 **Goal**: Complete end-to-end demo
 
 **Tasks**:
+
 1. Integrate all subsystems
 2. Create demo environment in Isaac Sim (living room + kitchen)
 3. Run full scenario 10 times
@@ -148,6 +155,7 @@ Your robot must complete this scenario:
 | Average time | under 5 min |
 
 **Deliverable**:
+
 - 3-minute demo video
 - Written report (5 pages)
 - Code repository link
@@ -159,16 +167,19 @@ Your robot must complete this scenario:
 ### Technical Implementation (60 points)
 
 - **Navigation (15 pts)**
+
   - Collision-free path planning
   - Dynamic obstacle avoidance
   - Accurate localization
 
 - **Perception (15 pts)**
+
   - Object detection accuracy
   - 3D pose estimation
   - Semantic understanding
 
 - **VLA Integration (15 pts)**
+
   - Speech recognition quality
   - Task planning coherence
   - Natural language understanding
@@ -181,6 +192,7 @@ Your robot must complete this scenario:
 ### System Design (20 points)
 
 - **Architecture (10 pts)**
+
   - Modular design
   - Clean interfaces
   - Error handling
@@ -193,6 +205,7 @@ Your robot must complete this scenario:
 ### Documentation & Presentation (20 points)
 
 - **Report (10 pts)**
+
   - Clear explanation of approach
   - Analysis of results
   - Discussion of limitations
@@ -215,7 +228,7 @@ cd humanoid-capstone-template
 
 ```bash
 # Install dependencies
-sudo apt install ros-humble-isaac-ros-*
+sudo apt install ros-humble-isaac-ros-visual-slam ros-humble-isaac-ros-nvblox
 pip install openai whisper ultralytics
 
 # Build workspace
@@ -252,6 +265,7 @@ ros2 launch humanoid_vla test_planning.launch.py
 **Due**: Week 8, Friday 11:59 PM
 
 **Format**:
+
 1. Code repository (GitHub)
 2. Demo video (YouTube/Vimeo)
 3. Written report (PDF)
