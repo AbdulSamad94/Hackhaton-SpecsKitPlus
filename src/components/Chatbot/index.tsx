@@ -69,7 +69,7 @@ export default function Chatbot() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          message: userMessage,
+          query: userMessage,
           history: messageHistory
         }),
       })
@@ -82,7 +82,7 @@ export default function Chatbot() {
 
       const botResponse: Message = {
         id: uuidv4(),
-        text: data.response,
+        text: data.answer,
         sender: "bot",
         timestamp: new Date(),
       }
