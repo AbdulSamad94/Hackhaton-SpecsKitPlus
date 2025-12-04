@@ -39,9 +39,10 @@ tests:
 
 ## PROMPT
 
-yoo bro deeply dive into the backend folder, and the way i am connect it to the frontend in the @[src/components/Chatbot], go through it, and complete the rag chatbot implementation, make sure, its correct, and name the file names, good, you can access the .env file in the backend folder, just make sure it works fine, you can create multiple components in the backend directory also for better code readibility understanding, you can use other way to implement the rag chatbot with the qdrant cloud, i just want a working rag chatbot, and the context that the rag will have is the mdx files that we have craeted in the @[docs] directory all the mdx files are the context, so please implement it make sure it works perfectly fine
+Please perform a deep dive into the `backend` folder and analyze its connection to the frontend in `src/components/Chatbot`. Complete the RAG chatbot implementation, ensuring its correctness and using appropriate file names. You have access to the `.env` file in the backend folder; please ensure everything works correctly. You can create multiple components in the backend directory for better code readability. While other methods for implementing the RAG chatbot with Qdrant Cloud are possible, the primary goal is a functional RAG chatbot. The context for the RAG will be all the MDX files located in the `docs` directory. Please implement the solution and verify it works perfectly.
 
 **Additional requirements:**
+
 - Use OpenAI Agents SDK (required for hackathon)
 - Connect with Gemini API via OpenAI compatibility layer
 - Implement proper RAG pipeline with Qdrant vector database
@@ -56,22 +57,26 @@ Successfully implemented a complete RAG chatbot system with the following compon
 ### Backend Implementation
 
 1. **Vector Database Setup (Qdrant)**
+
    - Created `backend/ingest.py` to index MDX files
    - Successfully indexed 138 chunks from documentation
    - Used Google Gemini text-embedding-004 for embeddings
    - Configured Qdrant Cloud connection
 
 2. **Agents SDK Integration**
+
    - Configured OpenAI Agents SDK with Gemini via `backend/models.py`
    - Used Gemini 2.0 Flash through OpenAI compatibility layer
    - Implemented async endpoints for proper event loop handling
 
 3. **API Endpoints**
+
    - `POST /api/chat`: Main RAG chat endpoint with context retrieval
    - `POST /api/ask-selection`: Text selection Q&A endpoint
    - `GET /api/health`: Health check endpoint
 
 4. **RAG Pipeline (`backend/main.py`)**
+
    - Query embedding generation
    - Vector similarity search in Qdrant
    - Context retrieval and formatting
@@ -86,6 +91,7 @@ Successfully implemented a complete RAG chatbot system with the following compon
 ### Frontend Integration
 
 Updated `src/components/Chatbot/index.tsx`:
+
 - Changed payload format to match backend API (`query` instead of `message`)
 - Updated response parsing (`answer` instead of `response`)
 - Maintained chat history functionality
@@ -100,11 +106,13 @@ Updated `src/components/Chatbot/index.tsx`:
 ### Technical Details
 
 **Dependencies added:**
+
 - `google-generativeai`: For Gemini API access
 - `qdrant-client`: For vector database operations
 - `openai` v2.9.0: For Agents SDK compatibility
 
 **Fixed Issues:**
+
 - Replaced missing `agents` library usage with proper SDK imports
 - Fixed async/await compatibility (converted sync to async endpoints)
 - Resolved dependency conflicts (`httpx-aiohttp` removal)
@@ -113,11 +121,11 @@ Updated `src/components/Chatbot/index.tsx`:
 ## OUTCOME
 
 - ✅ **Impact**: Fully functional RAG chatbot using OpenAI Agents SDK with Gemini and Qdrant
-- 🧪 **Tests**: 
+- 🧪 **Tests**:
   - Ingestion: 138 chunks successfully indexed
   - API test: Chat endpoint returns contextual answers
   - Integration: Frontend-backend communication verified
-- 📁 **Files**: 
+- 📁 **Files**:
   - Backend: `main.py`, `models.py`, `ingest.py`, `utils/`, `README.md`
   - Frontend: `src/components/Chatbot/index.tsx`
 - 🔁 **Next steps**: Deploy to production, add authentication, implement conversation memory
@@ -126,7 +134,7 @@ Updated `src/components/Chatbot/index.tsx`:
 ## EVALUATION NOTES
 
 - **Failure modes observed**: Initial dependency conflicts, async/await issues, model availability
-- **Fixes applied**: 
+- **Fixes applied**:
   - Upgraded openai library
   - Removed conflicting httpx-aiohttp
   - Converted endpoints to async
