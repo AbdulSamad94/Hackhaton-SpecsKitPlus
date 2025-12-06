@@ -6,7 +6,7 @@
     "dev": "concurrently \"npm run dev:root\" \"npm run dev:docs\"",
     "dev:root": "next dev",
     "dev:docs": "cd textbook && npm start -- --port 3001 --host 127.0.0.1",
-    "build": "cd textbook && npm install && npm run build && cd .. && mkdir -p public && xcopy /E /I textbook\\build public\\docs && next build",
+    "build": "cd textbook && npm install && npm run build && cd .. && npx shx mkdir -p public/docs && npx shx cp -r textbook/build/* public/docs/ && next build",
     "start": "next start",
     "lint": "eslint"
   },
@@ -27,6 +27,7 @@
     "concurrently": "^9.2.1",
     "eslint": "^9",
     "eslint-config-next": "16.0.7",
+    "shx": "^0.4.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
