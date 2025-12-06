@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import clsx from "clsx";
 import styles from "./styles.module.css";
 import { v4 as uuidv4 } from "uuid";
-import { SendHorizontal, BotMessageSquare, X } from "lucide-react";
+import { SendHorizontal, BotMessageSquare, X, Quote, Trash2 } from "lucide-react";
 import useDocusaurusContext from "@docusaurus/useDocusaurusContext";
 
 interface Message {
@@ -19,6 +19,7 @@ export default function Chatbot() {
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedText, setSelectedText] = useState("");
   const [messages, setMessages] = useState<Message[]>([
     {
       id: uuidv4(),
@@ -35,7 +36,27 @@ export default function Chatbot() {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, isOpen]);
+  }, [messages, isOpen, selectedText]);
+
+  useEffect(() => {
+    const handleSelection = () => {
+      const selection = window.getSelection();
+      if (selection && selection.toString().trim().length > 0) {
+        const text = selection.toString().trim();
+        // Only update if text is meaningful (e.g., > 5 chars) to avoid accidental clicks
+        if (text.length >= 5) {
+            setSelectedText(text);
+            // Optional: Auto-open chat if it's closed?
+            // setIsOpen(true);
+        }
+      }
+    };
+
+    document.addEventListener("mouseup", handleSelection);
+    return () => {
+      document.removeEventListener("mouseup", handleSelection);
+    };
+  }, []);
 
   const handleSend = async () => {
     if (!inputValue.trim()) return;
@@ -63,16 +84,34 @@ export default function Chatbot() {
         content: m.text,
       }));
 
-      const response = await fetch(`${apiUrl}/api/chat`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          query: userMessage,
-          history: messageHistory,
-        }),
-      });
+      let response;
+
+      if (selectedText) {
+        response = await fetch(`${apiUrl}/api/ask-selection`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            question: userMessage,
+            selected_text: selectedText,
+          }),
+        });
+      } else {
+        response = await fetch(`${apiUrl}/api/chat`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            query: userMessage,
+            history: messageHistory,
+          }),
+        });
+      }
+
+      // Clear selection after sending
+      setSelectedText("");
 
       if (!response.ok) {
         throw new Error("Failed to get response");
@@ -169,6 +208,31 @@ export default function Chatbot() {
             )}
             <div ref={messagesEndRef} />
           </div>
+
+
+
+          {/* Selected Text Context */}
+          {selectedText && (
+            <div className={styles.selectedContext}>
+              <div className={styles.selectedContextHeader}>
+                <span className={styles.selectedContextTitle}>
+                  <Quote size={14} /> Selected Text
+                </span>
+                <button
+                  onClick={() => setSelectedText("")}
+                  className={styles.clearContextButton}
+                  aria-label="Clear selection"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+              <div className={styles.selectedContextContent}>
+                {selectedText.length > 100
+                  ? `${selectedText.substring(0, 100)}...`
+                  : selectedText}
+              </div>
+            </div>
+          )}
 
           {/* Input */}
           <div className={styles.inputArea}>
