@@ -204,6 +204,75 @@
     }
 }
 
+/* Selected Context */
+.selectedContext {
+    padding: 0.8rem 1rem;
+    background: var(--ifm-color-emphasis-100);
+    border-top: 1px solid var(--ifm-color-emphasis-200);
+    font-size: 0.8rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+[data-theme="dark"] .selectedContext {
+    background: var(--ifm-color-emphasis-200);
+    border-color: var(--ifm-color-emphasis-300);
+}
+
+.selectedContextHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--ifm-color-emphasis-700);
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.selectedContextTitle {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.selectedContextContent {
+    color: var(--ifm-color-content);
+    font-style: italic;
+    border-left: 2px solid var(--ifm-color-primary);
+    padding-left: 0.8rem;
+    opacity: 0.9;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.clearContextButton {
+    background: transparent;
+    border: none;
+    color: var(--ifm-color-emphasis-600);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.clearContextButton:hover {
+    background: var(--ifm-color-emphasis-200);
+    color: var(--ifm-color-danger);
+}
+
+[data-theme="dark"] .clearContextButton:hover {
+    background: var(--ifm-color-emphasis-300);
+}
+
 /* Input Area */
 .inputArea {
     padding: 1rem;
