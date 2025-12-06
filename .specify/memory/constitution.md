@@ -1,13 +1,13 @@
 <!-- Sync Impact Report:
-Version change: 1.0.0 → 1.1.0
-List of modified principles: All previous principles replaced with new ones.
+Version change: 1.1.0 → 1.2.0
+List of modified principles: Added 'Secure Authentication & Personalization'.
 Added sections: None
 Removed sections: None
 Templates requiring updates:
-  - .specify/templates/plan-template.md: ⚠ pending
-  - .specify/templates/spec-template.md: ⚠ pending
-  - .specify/templates/tasks-template.md: ⚠ pending
-  - .specify/templates/commands/sp.constitution.md: ✅ updated
+  - .specify/templates/plan-template.md: ✅ updated
+  - .specify/templates/spec-template.md: ✅ updated
+  - .specify/templates/tasks-template.md: ✅ updated
+  - .claude/commands/sp.constitution.md: ✅ updated
 Follow-up TODOs: None
 -->
 # Physical AI & Humanoid Robotics Textbook Constitution
@@ -40,6 +40,9 @@ The textbook MUST include practical hardware recommendations, detailed lab setup
 
 ### Embodied Intelligence Focus
 The textbook MUST focus on embodied intelligence, specifically bridging digital AI theories and practices to physical robot implementations. This principle guides the selection and presentation of all topics, ensuring a strong connection to real-world robotics.
+
+### Secure Authentication & Personalization
+Users MUST be authenticated via Better-Auth (Neon DB) to access personalized features. Personalization data (software/hardware background) MUST be captured during signup to enable tailored experiences.
 
 ## Key Standards
 
@@ -98,4 +101,4 @@ The content effectively conveys the principles and applications of embodied inte
 ## Governance
 This constitution outlines the core principles and standards for the "Physical AI & Humanoid Robotics Textbook" project. Amendments require approval by the project lead. All work must comply with these guidelines.
 
-**Version**: 1.1.0 | **Ratified**: 2025-12-03 | **Last Amended**: 2025-12-03
+**Version**: 1.2.0 | **Ratified**: 2025-12-03 | **Last Amended**: 2025-12-07

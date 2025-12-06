@@ -31,7 +31,8 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+- [ ] All features MUST comply with the "Secure Authentication & Personalization" principle, ensuring users are authenticated via Better-Auth (Neon DB) and personalization data is captured during signup.
+- [Gates determined based on constitution file]
 
 ## Project Structure
 
