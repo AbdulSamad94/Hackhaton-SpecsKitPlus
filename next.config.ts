@@ -7,7 +7,7 @@ const nextConfig: NextConfig = {
       {
         source: "/docs/:path*",
         destination: process.env.NODE_ENV === 'development'
-          ? "http://127.0.0.1:3001/docs/:path*" // Local development proxy
+          ? `${process.env.DOCS_URL || 'http://127.0.0.1:3001'}/docs/:path*` // Local development proxy
           : "/docs/:path*", // In production, we assume static files are serviced or handled by Vercel
       },
     ];
