@@ -12,16 +12,27 @@ export default function AuthBar() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const controller = new AbortController();
+    const { signal } = controller;
+
     // Fetch session from Next.js API
-    fetch('/api/auth/session', { credentials: 'include' })
+    fetch('/api/auth/session', { credentials: 'include', signal })
       .then(res => res.json())
       .then(data => {
-        if (data.session && data.user) {
+        if (!signal.aborted && data.session && data.user) {
           setUser(data.user);
         }
       })
-      .catch(console.error)
-      .finally(() => setLoading(false));
+      .catch((err) => {
+        if (err.name !== 'AbortError') {
+            console.error(err);
+        }
+      })
+      .finally(() => {
+        if (!signal.aborted) setLoading(false);
+      });
+
+    return () => controller.abort();
   }, []);
 
   const handleLogout = async () => {

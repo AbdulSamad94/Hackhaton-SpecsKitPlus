@@ -35,7 +35,7 @@ export default function ProfilePage() {
         setLoading(false);
       })
       .catch((err) => {
-        console.error("Failed to load profile", err);
+        setMessage({ type: "error", text: "Failed to load profile data." });
         setLoading(false);
       });
   }, [router]);

@@ -6,8 +6,8 @@ export const user = pgTable("user", {
     email: text("email").notNull().unique(),
     emailVerified: boolean("emailVerified").notNull(),
     image: text("image"),
-    createdAt: timestamp("createdAt").notNull(),
-    updatedAt: timestamp("updatedAt").notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().notNull(),
     // Personalization fields
     softwareBackground: text("softwareBackground"),
     hardwareBackground: text("hardwareBackground"),
@@ -17,8 +17,8 @@ export const session = pgTable("session", {
     id: text("id").primaryKey(),
     expiresAt: timestamp("expiresAt").notNull(),
     token: text("token").notNull().unique(),
-    createdAt: timestamp("createdAt").notNull(),
-    updatedAt: timestamp("updatedAt").notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().notNull(),
     ipAddress: text("ipAddress"),
     userAgent: text("userAgent"),
     userId: text("userId")
@@ -40,8 +40,8 @@ export const account = pgTable("account", {
     refreshTokenExpiresAt: timestamp("refreshTokenExpiresAt"),
     scope: text("scope"),
     password: text("password"),
-    createdAt: timestamp("createdAt").notNull(),
-    updatedAt: timestamp("updatedAt").notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
 export const verification = pgTable("verification", {

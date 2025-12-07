@@ -48,23 +48,25 @@ export default function Chatbot() {
   }, [messages, isOpen, selectedText]);
 
   // Fetch user session on mount
+  // Fetch user session on mount
   useEffect(() => {
-    console.log("Fetching session for chatbot...");
-    fetch('/api/auth/session', { credentials: 'include' })
+    const controller = new AbortController();
+    const { signal } = controller;
+
+    fetch('/api/auth/session', { credentials: 'include', signal })
       .then(res => res.json())
       .then(data => {
-        console.log("Chatbot session data:", data);
-        if (data.session && data.user) {
-          console.log("User context found:", {
-            software: data.user.softwareBackground,
-            hardware: data.user.hardwareBackground
-          });
+        if (!signal.aborted && data.session && data.user) {
           setUserSession(data.user);
-        } else {
-            console.log("No active session found for chatbot");
         }
       })
-      .catch(err => console.error("Chatbot session fetch error:", err));
+      .catch(err => {
+          if (err.name !== 'AbortError') {
+            console.error("Chatbot session fetch error:", err);
+          }
+      });
+      
+    return () => controller.abort();
   }, []);
 
   useEffect(() => {

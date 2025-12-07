@@ -15,24 +15,27 @@ export default function OnboardingPage() {
 
   // Check if user already completed onboarding OR has pending data from signup
   useEffect(() => {
+    const controller = new AbortController();
+    const { signal } = controller;
+
     const checkOnboarding = async () => {
       try {
-        const response = await fetch("/api/auth/session", { credentials: "include" });
+        const response = await fetch("/api/auth/session", { 
+            credentials: "include",
+            signal
+        });
         const data = await response.json();
         
         if (!data.user) {
-          // Not logged in, redirect to login
           router.push("/login");
           return;
         }
         
         if (data.user.softwareBackground && data.user.hardwareBackground) {
-          // Already completed onboarding
           router.push("/docs/intro");
           return;
         }
 
-        // Check for pending background info from social signup flow
         const pending = sessionStorage.getItem("pendingBackground");
         if (pending) {
             try {
@@ -44,46 +47,50 @@ export default function OnboardingPage() {
                     };
                     setFormData(newData);
                     
-                    // Auto-submit the data for seamless experience
-                    setLoading(true); // Show loading state immediately
-                    
-                    // We need to call the update API directly here inside the effect
-                    // But we can't call handleSubmit directly as it expects an event
-                    // So lets define a separate update function or do fetch right here
+                    setLoading(true);
                      fetch("/api/auth/update-profile", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         credentials: "include",
                         body: JSON.stringify(newData),
+                        // We don't attach signal here as we want this to complete even if unmounted? 
+                        // Actually better to cancel if user navigates away to prevent multiple submissions
+                        signal 
                       })
                       .then(res => {
                           if (res.ok) {
-                              sessionStorage.removeItem("pendingBackground"); // Only remove on success
+                              sessionStorage.removeItem("pendingBackground");
                               router.push("/docs/intro");
                           } else {
                               throw new Error("Failed to auto-save");
                           }
                       })
                       .catch(err => {
-                          console.error("Auto-save failed", err);
-                          setLoading(false); // Let user try manually if auto-save fails
+                          if (err.name !== 'AbortError') {
+                              console.error("Auto-save failed", err);
+                              setLoading(false);
+                          }
                       });
                       
-                      return; // Stop checking further, we are redirecting or showing error
+                      return;
                 }
             } catch (e) {
                 console.error("Failed to parse pending background", e);
             }
         }
         
-        setChecking(false);
-      } catch (err) {
-        console.error("Failed to check onboarding status:", err);
-        setChecking(false);
+        if (!signal.aborted) setChecking(false);
+      } catch (err: any) {
+        if (err.name !== 'AbortError') {
+            console.error("Failed to check onboarding status:", err);
+            setChecking(false);
+        }
       }
     };
     
     checkOnboarding();
+
+    return () => controller.abort();
   }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {

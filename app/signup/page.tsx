@@ -32,10 +32,9 @@ export default function SignupPage() {
         email: formData.email,
         password: formData.password,
         name: formData.name,
-        // @ts-ignore - custom fields
         softwareBackground: formData.softwareBackground,
         hardwareBackground: formData.hardwareBackground,
-      });
+      } as any); // Cast to any to handle custom fields not yet in types
       router.push("/docs");
     } catch (err: any) {
       setError(err.message || "Signup failed");
@@ -55,7 +54,7 @@ export default function SignupPage() {
       
       await authClient.signIn.social({
         provider,
-        callbackURL: "/docs",
+        callbackURL: "/onboarding",
       });
     } catch (err: any) {
       setError(err.message || "Social signup failed");

@@ -2,6 +2,13 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "@/db/index";
 
+if (!process.env.GITHUB_CLIENT_ID || !process.env.GITHUB_CLIENT_SECRET) {
+    throw new Error("GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET must be set");
+}
+if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+    throw new Error("GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET must be set");
+}
+
 export const auth = betterAuth({
     database: drizzleAdapter(db, {
         provider: "pg",
