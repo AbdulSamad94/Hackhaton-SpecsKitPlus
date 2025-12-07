@@ -12,6 +12,14 @@ interface Message {
   timestamp: Date;
 }
 
+interface UserSession {
+  id: string;
+  name: string;
+  email: string;
+  softwareBackground?: string;
+  hardwareBackground?: string;
+}
+
 export default function Chatbot() {
   const { siteConfig } = useDocusaurusContext();
   const apiUrl = siteConfig.customFields?.apiUrl as string;
@@ -20,6 +28,7 @@ export default function Chatbot() {
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [selectedText, setSelectedText] = useState("");
+  const [userSession, setUserSession] = useState<UserSession | null>(null);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: uuidv4(),
@@ -37,6 +46,26 @@ export default function Chatbot() {
   useEffect(() => {
     scrollToBottom();
   }, [messages, isOpen, selectedText]);
+
+  // Fetch user session on mount
+  useEffect(() => {
+    console.log("Fetching session for chatbot...");
+    fetch('/api/auth/session', { credentials: 'include' })
+      .then(res => res.json())
+      .then(data => {
+        console.log("Chatbot session data:", data);
+        if (data.session && data.user) {
+          console.log("User context found:", {
+            software: data.user.softwareBackground,
+            hardware: data.user.hardwareBackground
+          });
+          setUserSession(data.user);
+        } else {
+            console.log("No active session found for chatbot");
+        }
+      })
+      .catch(err => console.error("Chatbot session fetch error:", err));
+  }, []);
 
   useEffect(() => {
     const handleSelection = () => {
@@ -95,6 +124,10 @@ export default function Chatbot() {
           body: JSON.stringify({
             question: userMessage,
             selected_text: selectedText,
+            user_context: userSession ? {
+              software_background: userSession.softwareBackground,
+              hardware_background: userSession.hardwareBackground,
+            } : undefined,
           }),
         });
       } else {
@@ -106,6 +139,10 @@ export default function Chatbot() {
           body: JSON.stringify({
             query: userMessage,
             history: messageHistory,
+            user_context: userSession ? {
+              software_background: userSession.softwareBackground,
+              hardware_background: userSession.hardwareBackground,
+            } : undefined,
           }),
         });
       }

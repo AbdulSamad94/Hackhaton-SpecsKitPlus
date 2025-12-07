@@ -1,0 +1,213 @@
+# Authentication API Contracts
+
+## User Registration
+
+### POST /api/auth/signup
+**Description**: Register a new user with background information and credentials
+
+**Request Body**:
+```json
+{
+  "email": "user@example.com",
+  "password": "securePassword123",
+  "softwareBackground": "Full-stack developer with React and Node.js experience",
+  "hardwareBackground": "Experience with Arduino and Raspberry Pi projects",
+  "firstName": "John",
+  "lastName": "Doe"
+}
+```
+
+**Success Response (200)**:
+```json
+{
+  "user": {
+    "id": "user-uuid",
+    "email": "user@example.com",
+    "emailVerified": false,
+    "firstName": "John",
+    "lastName": "Doe",
+    "softwareBackground": "Full-stack developer with React and Node.js experience",
+    "hardwareBackground": "Experience with Arduino and Raspberry Pi projects",
+    "createdAt": "2025-12-07T10:00:00Z"
+  },
+  "session": {
+    "id": "session-uuid",
+    "expiresAt": "2025-12-08T10:00:00Z"
+  }
+}
+```
+
+**Error Responses**:
+- 400: Invalid input data
+- 409: User with email already exists
+
+## User Login
+
+### POST /api/auth/login
+**Description**: Authenticate user with email and password
+
+**Request Body**:
+```json
+{
+  "email": "user@example.com",
+  "password": "securePassword123"
+}
+```
+
+**Success Response (200)**:
+```json
+{
+  "user": {
+    "id": "user-uuid",
+    "email": "user@example.com",
+    "firstName": "John",
+    "lastName": "Doe",
+    "softwareBackground": "Full-stack developer with React and Node.js experience",
+    "hardwareBackground": "Experience with Arduino and Raspberry Pi projects"
+  },
+  "session": {
+    "id": "session-uuid",
+    "expiresAt": "2025-12-08T10:00:00Z"
+  }
+}
+```
+
+**Error Responses**:
+- 400: Invalid input data
+- 401: Invalid credentials
+
+## Social Login
+
+### POST /api/auth/social/{provider}
+**Description**: Authenticate user via social provider (google/github)
+
+**Path Parameters**:
+- provider: "google" or "github"
+
+**Request Body**:
+```json
+{
+  "provider": "google",
+  "providerAccountId": "provider-account-id",
+  "accessToken": "access-token-from-provider",
+  "email": "user@example.com",
+  "firstName": "John",
+  "lastName": "Doe",
+  "softwareBackground": "Full-stack developer with React and Node.js experience",
+  "hardwareBackground": "Experience with Arduino and Raspberry Pi projects"
+}
+```
+
+**Success Response (200)**:
+```json
+{
+  "user": {
+    "id": "user-uuid",
+    "email": "user@example.com",
+    "firstName": "John",
+    "lastName": "Doe",
+    "softwareBackground": "Full-stack developer with React and Node.js experience",
+    "hardwareBackground": "Experience with Arduino and Raspberry Pi projects"
+  },
+  "session": {
+    "id": "session-uuid",
+    "expiresAt": "2025-12-08T10:00:00Z"
+  }
+}
+```
+
+## Get Current User
+
+### GET /api/auth/me
+**Description**: Get information about the currently authenticated user
+
+**Headers**:
+- Authorization: Bearer {session_token} or Cookie with session
+
+**Success Response (200)**:
+```json
+{
+  "user": {
+    "id": "user-uuid",
+    "email": "user@example.com",
+    "emailVerified": true,
+    "firstName": "John",
+    "lastName": "Doe",
+    "softwareBackground": "Full-stack developer with React and Node.js experience",
+    "hardwareBackground": "Experience with Arduino and Raspberry Pi projects",
+    "createdAt": "2025-12-07T10:00:00Z",
+    "updatedAt": "2025-12-07T10:30:00Z"
+  }
+}
+```
+
+**Error Responses**:
+- 401: Unauthorized (no valid session)
+
+## Update User Background
+
+### PATCH /api/auth/profile
+**Description**: Update user's background information
+
+**Headers**:
+- Authorization: Bearer {session_token} or Cookie with session
+
+**Request Body**:
+```json
+{
+  "softwareBackground": "Updated software background information",
+  "hardwareBackground": "Updated hardware background information"
+}
+```
+
+**Success Response (200)**:
+```json
+{
+  "user": {
+    "id": "user-uuid",
+    "email": "user@example.com",
+    "softwareBackground": "Updated software background information",
+    "hardwareBackground": "Updated hardware background information"
+  }
+}
+```
+
+## Logout
+
+### POST /api/auth/logout
+**Description**: End the current user session
+
+**Headers**:
+- Authorization: Bearer {session_token} or Cookie with session
+
+**Success Response (200)**:
+```json
+{
+  "success": true,
+  "message": "Successfully logged out"
+}
+```
+
+## Session Validation
+
+### POST /api/auth/session/validate
+**Description**: Validate if a session is still active
+
+**Headers**:
+- Authorization: Bearer {session_token} or Cookie with session
+
+**Success Response (200)**:
+```json
+{
+  "valid": true,
+  "user": {
+    "id": "user-uuid",
+    "email": "user@example.com",
+    "firstName": "John"
+  },
+  "expiresAt": "2025-12-08T10:00:00Z"
+}
+```
+
+**Error Responses**:
+- 401: Invalid or expired session

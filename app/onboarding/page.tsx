@@ -1,0 +1,189 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+
+export default function OnboardingPage() {
+  const [formData, setFormData] = useState({
+    softwareBackground: "",
+    hardwareBackground: "",
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [checking, setChecking] = useState(true);
+  const router = useRouter();
+
+  // Check if user already completed onboarding OR has pending data from signup
+  useEffect(() => {
+    const checkOnboarding = async () => {
+      try {
+        const response = await fetch("/api/auth/session", { credentials: "include" });
+        const data = await response.json();
+        
+        if (!data.user) {
+          // Not logged in, redirect to login
+          router.push("/login");
+          return;
+        }
+        
+        if (data.user.softwareBackground && data.user.hardwareBackground) {
+          // Already completed onboarding
+          router.push("/docs/intro");
+          return;
+        }
+
+        // Check for pending background info from social signup flow
+        const pending = sessionStorage.getItem("pendingBackground");
+        if (pending) {
+            try {
+                const parsed = JSON.parse(pending);
+                if (parsed.softwareBackground || parsed.hardwareBackground) {
+                    const newData = {
+                        softwareBackground: parsed.softwareBackground || "",
+                        hardwareBackground: parsed.hardwareBackground || ""
+                    };
+                    setFormData(newData);
+                    
+                    // Auto-submit the data for seamless experience
+                    setLoading(true); // Show loading state immediately
+                    
+                    // We need to call the update API directly here inside the effect
+                    // But we can't call handleSubmit directly as it expects an event
+                    // So lets define a separate update function or do fetch right here
+                     fetch("/api/auth/update-profile", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        credentials: "include",
+                        body: JSON.stringify(newData),
+                      })
+                      .then(res => {
+                          if (res.ok) {
+                              sessionStorage.removeItem("pendingBackground"); // Only remove on success
+                              router.push("/docs/intro");
+                          } else {
+                              throw new Error("Failed to auto-save");
+                          }
+                      })
+                      .catch(err => {
+                          console.error("Auto-save failed", err);
+                          setLoading(false); // Let user try manually if auto-save fails
+                      });
+                      
+                      return; // Stop checking further, we are redirecting or showing error
+                }
+            } catch (e) {
+                console.error("Failed to parse pending background", e);
+            }
+        }
+        
+        setChecking(false);
+      } catch (err) {
+        console.error("Failed to check onboarding status:", err);
+        setChecking(false);
+      }
+    };
+    
+    checkOnboarding();
+  }, [router]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+
+    try {
+      // Update user profile with background info
+      const response = await fetch("/api/auth/update-profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update profile");
+      }
+
+      router.push("/docs/intro");
+    } catch (err: any) {
+      setError(err.message || "Failed to save information");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (checking) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="text-center">
+          <p className="text-gray-600 dark:text-gray-400">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+      <div className="max-w-2xl w-full space-y-8 p-8 bg-white dark:bg-gray-800 rounded-lg shadow-lg">
+        <div>
+          <h2 className="text-center text-3xl font-bold text-gray-900 dark:text-white">
+            Complete Your Profile
+          </h2>
+          <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
+            Help us personalize your learning experience
+          </p>
+        </div>
+
+        {error && (
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-4 py-3 rounded">
+            {error}
+          </div>
+        )}
+
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="softwareBackground" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Software Background
+              </label>
+              <textarea
+                id="softwareBackground"
+                name="softwareBackground"
+                rows={4}
+                required
+                placeholder="e.g., Python developer with 5 years experience, familiar with React and Node.js..."
+                value={formData.softwareBackground}
+                onChange={(e) => setFormData({ ...formData, softwareBackground: e.target.value })}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="hardwareBackground" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Hardware Background
+              </label>
+              <textarea
+                id="hardwareBackground"
+                name="hardwareBackground"
+                rows={4}
+                required
+                placeholder="e.g., Experience with Arduino, Raspberry Pi, robotics projects..."
+                value={formData.hardwareBackground}
+                onChange={(e) => setFormData({ ...formData, hardwareBackground: e.target.value })}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+              />
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? "Saving..." : "Complete Setup"}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
