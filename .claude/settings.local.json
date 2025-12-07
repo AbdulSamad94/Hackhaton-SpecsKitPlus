@@ -13,7 +13,8 @@
       "Bash(taskkill:*)",
       "Bash(powershell:*)",
       "Bash(git add:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(mkdir -p specs/001-auth-system/checklists)"
     ],
     "deny": [],
     "ask": []

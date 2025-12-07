@@ -12,6 +12,14 @@ interface Message {
   timestamp: Date;
 }
 
+interface UserSession {
+  id: string;
+  name: string;
+  email: string;
+  softwareBackground?: string;
+  hardwareBackground?: string;
+}
+
 export default function Chatbot() {
   const { siteConfig } = useDocusaurusContext();
   const apiUrl = siteConfig.customFields?.apiUrl as string;
@@ -20,6 +28,7 @@ export default function Chatbot() {
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [selectedText, setSelectedText] = useState("");
+  const [userSession, setUserSession] = useState<UserSession | null>(null);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: uuidv4(),
@@ -37,6 +46,28 @@ export default function Chatbot() {
   useEffect(() => {
     scrollToBottom();
   }, [messages, isOpen, selectedText]);
+
+  // Fetch user session on mount
+  // Fetch user session on mount
+  useEffect(() => {
+    const controller = new AbortController();
+    const { signal } = controller;
+
+    fetch('/api/auth/session', { credentials: 'include', signal })
+      .then(res => res.json())
+      .then(data => {
+        if (!signal.aborted && data.session && data.user) {
+          setUserSession(data.user);
+        }
+      })
+      .catch(err => {
+          if (err.name !== 'AbortError') {
+            console.error("Chatbot session fetch error:", err);
+          }
+      });
+      
+    return () => controller.abort();
+  }, []);
 
   useEffect(() => {
     const handleSelection = () => {
@@ -95,6 +126,10 @@ export default function Chatbot() {
           body: JSON.stringify({
             question: userMessage,
             selected_text: selectedText,
+            user_context: userSession ? {
+              software_background: userSession.softwareBackground,
+              hardware_background: userSession.hardwareBackground,
+            } : undefined,
           }),
         });
       } else {
@@ -106,6 +141,10 @@ export default function Chatbot() {
           body: JSON.stringify({
             query: userMessage,
             history: messageHistory,
+            user_context: userSession ? {
+              software_background: userSession.softwareBackground,
+              hardware_background: userSession.hardwareBackground,
+            } : undefined,
           }),
         });
       }
