@@ -1,121 +1,119 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
-import clsx from "clsx";
-import styles from "./styles.module.css";
-import { v4 as uuidv4 } from "uuid";
-import { SendHorizontal, BotMessageSquare, X, Quote, Trash2 } from "lucide-react";
-import useDocusaurusContext from "@docusaurus/useDocusaurusContext";
+"use client"
+
+import type React from "react"
+import { useState, useRef, useEffect } from "react"
+import clsx from "clsx"
+import styles from "./styles.module.css"
+import { v4 as uuidv4 } from "uuid"
+import { SendHorizontal, BotMessageSquare, X, Quote, Trash2 } from "lucide-react"
+import useDocusaurusContext from "@docusaurus/useDocusaurusContext"
+
+type SizeOption = "small" | "medium" | "large"
 
 interface Message {
-  id: string;
-  text: string;
-  sender: "user" | "bot";
-  timestamp: Date;
+  id: string
+  text: string
+  sender: "user" | "bot"
+  timestamp: Date
 }
 
 interface UserSession {
-  id: string;
-  name: string;
-  email: string;
-  softwareBackground?: string;
-  hardwareBackground?: string;
+  id: string
+  name: string
+  email: string
+  softwareBackground?: string
+  hardwareBackground?: string
 }
 
-export default function Chatbot() {
-  const { siteConfig } = useDocusaurusContext();
-  const apiUrl = siteConfig.customFields?.apiUrl as string;
+export default function ChatbotEnhanced() {
+  const { siteConfig } = useDocusaurusContext()
+  const apiUrl = siteConfig.customFields?.apiUrl as string
 
-  const [isOpen, setIsOpen] = useState(false);
-  const [inputValue, setInputValue] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [selectedText, setSelectedText] = useState("");
-  const [userSession, setUserSession] = useState<UserSession | null>(null);
+  const [isOpen, setIsOpen] = useState(false)
+  const [inputValue, setInputValue] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
+  const [selectedText, setSelectedText] = useState("")
+  const [userSession, setUserSession] = useState<UserSession | null>(null)
+  const [currentSize, setCurrentSize] = useState<SizeOption>("medium")
   const [messages, setMessages] = useState<Message[]>([
     {
       id: uuidv4(),
-      text: "Hello! 👋 I'm your AI assistant. How can I help you master Next.js today?",
+      text: "Hello! 👋 I'm your AI assistant. How can I help you today?",
       sender: "bot",
       timestamp: new Date(),
     },
-  ]);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  ])
+  const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages, isOpen, selectedText]);
+    scrollToBottom()
+  }, [messages, isOpen, selectedText])
 
-  // Fetch user session on mount
-  // Fetch user session on mount
   useEffect(() => {
-    const controller = new AbortController();
-    const { signal } = controller;
+    const controller = new AbortController()
+    const { signal } = controller
 
-    fetch('/api/auth/session', { credentials: 'include', signal })
-      .then(res => res.json())
-      .then(data => {
+    fetch("/api/auth/session", { credentials: "include", signal })
+      .then((res) => res.json())
+      .then((data) => {
         if (!signal.aborted && data.session && data.user) {
-          setUserSession(data.user);
+          setUserSession(data.user)
         }
       })
-      .catch(err => {
-          if (err.name !== 'AbortError') {
-            console.error("Chatbot session fetch error:", err);
-          }
-      });
-      
-    return () => controller.abort();
-  }, []);
+      .catch((err) => {
+        if (err.name !== "AbortError") {
+          console.error("Chatbot session fetch error:", err)
+        }
+      })
+
+    return () => controller.abort()
+  }, [])
 
   useEffect(() => {
     const handleSelection = () => {
-      const selection = window.getSelection();
+      const selection = window.getSelection()
       if (selection && selection.toString().trim().length > 0) {
-        const text = selection.toString().trim();
-        // Only update if text is meaningful (e.g., > 5 chars) to avoid accidental clicks
+        const text = selection.toString().trim()
         if (text.length >= 5) {
-            setSelectedText(text);
-            // Optional: Auto-open chat if it's closed?
-            // setIsOpen(true);
+          setSelectedText(text)
         }
       }
-    };
+    }
 
-    document.addEventListener("mouseup", handleSelection);
+    document.addEventListener("mouseup", handleSelection)
     return () => {
-      document.removeEventListener("mouseup", handleSelection);
-    };
-  }, []);
+      document.removeEventListener("mouseup", handleSelection)
+    }
+  }, [])
 
   const handleSend = async () => {
-    if (!inputValue.trim()) return;
+    if (!inputValue.trim()) return
 
-    const userMessage = inputValue.trim();
+    const userMessage = inputValue.trim()
 
     const newUserMessage: Message = {
       id: uuidv4(),
       text: userMessage,
       sender: "user",
       timestamp: new Date(),
-    };
+    }
 
-    // Clear input immediately for better UX
-    setInputValue("");
-    setIsLoading(true);
+    setInputValue("")
+    setIsLoading(true)
 
-    // Update messages with the new user message
-    setMessages((prev) => [...prev, newUserMessage]);
+    setMessages((prev) => [...prev, newUserMessage])
 
     try {
-      // Build history that includes the current message
       const messageHistory = [...messages, newUserMessage].map((m) => ({
         role: m.sender,
         content: m.text,
-      }));
+      }))
 
-      let response;
+      let response
 
       if (selectedText) {
         response = await fetch(`${apiUrl}/api/ask-selection`, {
@@ -126,12 +124,14 @@ export default function Chatbot() {
           body: JSON.stringify({
             question: userMessage,
             selected_text: selectedText,
-            user_context: userSession ? {
-              software_background: userSession.softwareBackground,
-              hardware_background: userSession.hardwareBackground,
-            } : undefined,
+            user_context: userSession
+              ? {
+                  software_background: userSession.softwareBackground,
+                  hardware_background: userSession.hardwareBackground,
+                }
+              : undefined,
           }),
-        });
+        })
       } else {
         response = await fetch(`${apiUrl}/api/chat`, {
           method: "POST",
@@ -141,82 +141,91 @@ export default function Chatbot() {
           body: JSON.stringify({
             query: userMessage,
             history: messageHistory,
-            user_context: userSession ? {
-              software_background: userSession.softwareBackground,
-              hardware_background: userSession.hardwareBackground,
-            } : undefined,
+            user_context: userSession
+              ? {
+                  software_background: userSession.softwareBackground,
+                  hardware_background: userSession.hardwareBackground,
+                }
+              : undefined,
           }),
-        });
+        })
       }
 
-      // Clear selection after sending
-      setSelectedText("");
+      setSelectedText("")
 
       if (!response.ok) {
-        throw new Error("Failed to get response");
+        throw new Error("Failed to get response")
       }
 
-      const data = await response.json();
+      const data = await response.json()
 
       const botResponse: Message = {
         id: uuidv4(),
         text: data.answer,
         sender: "bot",
         timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, botResponse]);
+      }
+      setMessages((prev) => [...prev, botResponse])
     } catch (error) {
-      console.error("Error sending message:", error);
+      console.error("Error sending message:", error)
       const errorResponse: Message = {
         id: uuidv4(),
         text: "Sorry, I'm having trouble connecting to the server. Please try again later.",
         sender: "bot",
         timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, errorResponse]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleKeyPress = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        handleSend();
       }
-    },
-    [handleSend]
-  );
+      setMessages((prev) => [...prev, errorResponse])
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault()
+      handleSend()
+    }
+  }
+
+  const handleSizeChange = (newSize: SizeOption) => {
+    setCurrentSize(newSize)
+  }
 
   return (
     <div className={styles.chatbotContainer}>
       {isOpen && (
-        <div className={styles.chatWindow}>
-          {/* Header */}
+        <div className={clsx(styles.chatWindow, styles[`size-${currentSize}`])}>
+          {/* Header with Size Controls */}
           <div className={styles.header}>
             <div className={styles.headerTitle}>
               <span>🤖</span> AI Assistant
             </div>
-            <button
-              className={styles.closeButton}
-              onClick={() => setIsOpen(false)}
-              aria-label="Close chat"
-            >
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+            <div className={styles.sizeControls}>
+              <button
+                className={clsx(styles.sizeButton, currentSize === "small" && styles.active)}
+                onClick={() => handleSizeChange("small")}
+                title="Small size"
+                aria-label="Small window"
               >
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-              </svg>
-            </button>
+                S
+              </button>
+              <button
+                className={clsx(styles.sizeButton, currentSize === "medium" && styles.active)}
+                onClick={() => handleSizeChange("medium")}
+                title="Medium size"
+                aria-label="Medium window"
+              >
+                M
+              </button>
+              <button
+                className={clsx(styles.sizeButton, currentSize === "large" && styles.active)}
+                onClick={() => handleSizeChange("large")}
+                title="Large size"
+                aria-label="Large window"
+              >
+                L
+              </button>
+            </div>
           </div>
 
           {/* Messages */}
@@ -224,10 +233,7 @@ export default function Chatbot() {
             {messages.map((msg) => (
               <div
                 key={msg.id}
-                className={clsx(
-                  styles.message,
-                  msg.sender === "user" ? styles.userMessage : styles.botMessage
-                )}
+                className={clsx(styles.message, msg.sender === "user" ? styles.userMessage : styles.botMessage)}
               >
                 {msg.text}
                 <span className={styles.messageTime}>
@@ -248,8 +254,6 @@ export default function Chatbot() {
             <div ref={messagesEndRef} />
           </div>
 
-
-
           {/* Selected Text Context */}
           {selectedText && (
             <div className={styles.selectedContext}>
@@ -266,9 +270,7 @@ export default function Chatbot() {
                 </button>
               </div>
               <div className={styles.selectedContextContent}>
-                {selectedText.length > 100
-                  ? `${selectedText.substring(0, 100)}...`
-                  : selectedText}
+                {selectedText.length > 100 ? `${selectedText.substring(0, 100)}...` : selectedText}
               </div>
             </div>
           )}
@@ -284,28 +286,22 @@ export default function Chatbot() {
               onKeyDown={handleKeyPress}
               disabled={isLoading}
             />
-            <SendHorizontal
+            <button
               onClick={handleSend}
+              className={styles.sendButtonWrapper}
+              disabled={isLoading || !inputValue.trim()}
               aria-label="Send message"
-              className={styles.sendButton}
-              style={{
-                opacity: isLoading || !inputValue.trim() ? 0.5 : 1,
-                cursor:
-                  isLoading || !inputValue.trim() ? "not-allowed" : "pointer",
-              }}
-            />
+            >
+              <SendHorizontal size={18} />
+            </button>
           </div>
         </div>
       )}
 
       {/* Toggle Button */}
-      <button
-        className={styles.toggleButton}
-        onClick={() => setIsOpen(!isOpen)}
-        aria-label="Toggle chat"
-      >
-        {isOpen ? <X /> : <BotMessageSquare />}
+      <button className={styles.toggleButton} onClick={() => setIsOpen(!isOpen)} aria-label="Toggle chat">
+        {isOpen ? <X size={24} /> : <BotMessageSquare size={24} />}
       </button>
     </div>
-  );
+  )
 }
