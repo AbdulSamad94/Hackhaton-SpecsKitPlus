@@ -183,7 +183,83 @@ footer {
   padding: 0 1.5rem;
 }
 
-/* Smooth transitions */
-* {
-  transition: all
+
+/* AuthBar Visibility on Mobile */
+.navbar__item.auth-bar-mobile-visible {
+  display: block;
+}
+
+@media (max-width: 996px) {
+  .navbar__item.auth-bar-mobile-visible {
+    display: flex;
+    /* Ensure it shows as flex item in mobile header */
+    align-items: center;
+  }
+
+  /* Reset some default navbar item styles that might hide it or add weird margins */
+  .navbar__item.auth-bar-mobile-visible {
+    padding: 0 0.5rem;
+  }
+}
+
+/* Dropdown Animation & Premium Styling */
+@keyframes dropdownSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.dropdown>.dropdown__menu {
+  animation: dropdownSlideIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  padding: 0.5rem;
+  min-width: 180px;
+  margin-top: 0.25rem !important;
+  /* Force margin */
+  display: block;
+  /* Ensure it listens to parent hover state (Docusaurus handles display, but animation requires block when present) */
+  margin-top: 0.25rem;
+
+  /* Hide when not active (Docusaurus handles this via display:none usually, but we want to animate in) */
+  /* Actually Docusaurus toggles 'dropdown--show' class or uses :hover. We rely on the existing visibility logic but beautify the container. */
+
+  [data-theme="dark"] .dropdown>.dropdown__menu {
+    background-color: #161b23;
+    box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1);
+    border: none;
+  }
+
+  .dropdown__link {
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    font-size: 0.95rem;
+  }
+
+  .dropdown__link:hover,
+  .dropdown__link:focus {
+    background-color: var(--ifm-color-emphasis-200);
+    color: var(--ifm-color-primary);
+    text-decoration: none;
+    transform: translateX(2px);
+  }
+
+  [data-theme="dark"] .dropdown__link:hover,
+  [data-theme="dark"] .dropdown__link:focus {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: var(--ifm-color-primary-light);
+  }
+
+  /* Fix avatar cursor */
+  .navbar__item .avatar__photo {
+    cursor: pointer;
+  }
 }

@@ -3,6 +3,19 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
+import {
+  Mail,
+  Lock,
+  User,
+  Code,
+  Zap,
+  Chrome,
+  Github,
+  ArrowRight,
+  BookOpen,
+} from "lucide-react";
+import Link from "next/link";
+import { AnimatedRightSection } from "@/components/auth/animated-right-section";
 
 export default function SignupPage() {
   const [step, setStep] = useState(1);
@@ -28,16 +41,24 @@ export default function SignupPage() {
     setLoading(true);
 
     try {
+      // Store background data in session storage for later processing on the onboarding page
+      sessionStorage.setItem(
+        "pendingBackground",
+        JSON.stringify({
+          softwareBackground: formData.softwareBackground,
+          hardwareBackground: formData.hardwareBackground,
+        })
+      );
+
       await authClient.signUp.email({
         email: formData.email,
         password: formData.password,
         name: formData.name,
-        softwareBackground: formData.softwareBackground,
-        hardwareBackground: formData.hardwareBackground,
-      } as any); // Cast to any to handle custom fields not yet in types
-      router.push("/docs");
-    } catch (err: any) {
-      setError(err.message || "Signup failed");
+      });
+      // Redirect to onboarding to process the pending background data
+      router.push("/onboarding");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message || "Error" : "Signup failed");
     } finally {
       setLoading(false);
     }
@@ -46,198 +67,251 @@ export default function SignupPage() {
   const handleSocialSignup = async (provider: "google" | "github") => {
     setLoading(true);
     try {
-      // Store background info in session storage to retrieve after OAuth
-      sessionStorage.setItem("pendingBackground", JSON.stringify({
-        softwareBackground: formData.softwareBackground,
-        hardwareBackground: formData.hardwareBackground,
-      }));
-      
+      sessionStorage.setItem(
+        "pendingBackground",
+        JSON.stringify({
+          softwareBackground: formData.softwareBackground,
+          hardwareBackground: formData.hardwareBackground,
+        })
+      );
+
       await authClient.signIn.social({
         provider,
         callbackURL: "/onboarding",
       });
-    } catch (err: any) {
-      setError(err.message || "Social signup failed");
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error ? err.message || "Error" : "Social signup failed"
+      );
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-2xl w-full space-y-8 p-8 bg-white dark:bg-gray-800 rounded-lg shadow-lg">
-        <div>
-          <h2 className="text-center text-3xl font-bold text-gray-900 dark:text-white">
-            Create your account
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
-            Step {step} of 2
-          </p>
-        </div>
-
-        {error && (
-          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-4 py-3 rounded">
-            {error}
+    <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 gap-0">
+      {/* Left Section - Form */}
+      <div className="flex flex-col justify-center items-center px-6 py-12 sm:px-12 lg:px-16 bg-background">
+        <div className="w-full max-w-md space-y-8">
+          {/* Logo */}
+          <div className="flex items-center justify-start space-x-3">
+            <div className="p-2.5 bg-linear-to-br from-emerald-500 to-teal-600 rounded-xl shadow-lg">
+              <BookOpen className="w-6 h-6 text-white" />
+            </div>
+            <span className="text-xl font-bold text-foreground">
+              Physical AI Hub
+            </span>
           </div>
-        )}
 
-        {step === 1 && (
-          <form className="mt-8 space-y-6" onSubmit={handleBackgroundSubmit}>
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                Tell us about yourself
-              </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                This helps us personalize your learning experience
-              </p>
+          {/* Header */}
+          <div className="space-y-2">
+            <h1 className="text-4xl font-bold bg-linear-to-r from-emerald-600 to-teal-600 dark:from-emerald-400 dark:to-teal-400 bg-clip-text text-transparent">
+              Join Us Today
+            </h1>
+            <p className="text-muted-foreground text-lg">Step {step} of 2</p>
+          </div>
+
+          {/* Error Message */}
+          {error && (
+            <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-xl text-sm">
+              {error}
+            </div>
+          )}
+
+          {/* Form */}
+          {step === 1 ? (
+            <form className="space-y-6" onSubmit={handleBackgroundSubmit}>
+              <div>
+                <h2 className="text-xl font-bold text-foreground mb-2 flex items-center gap-2">
+                  <Zap className="w-5 h-5 text-emerald-600" />
+                  Tell Us About Yourself
+                </h2>
+                <p className="text-muted-foreground text-sm">
+                  This helps us personalize your learning experience
+                </p>
+              </div>
 
               <div>
-                <label htmlFor="softwareBackground" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label className="text-sm font-semibold text-foreground mb-2.5 flex items-center gap-2">
+                  <Code className="w-4 h-4 text-emerald-600" />
                   Software Background
                 </label>
                 <textarea
-                  id="softwareBackground"
-                  name="softwareBackground"
                   rows={4}
                   placeholder="e.g., Python developer with 5 years experience, familiar with React and Node.js..."
                   value={formData.softwareBackground}
-                  onChange={(e) => setFormData({ ...formData, softwareBackground: e.target.value })}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      softwareBackground: e.target.value,
+                    })
+                  }
+                  className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent dark:text-foreground placeholder-muted-foreground transition-all resize-none"
                 />
               </div>
 
               <div>
-                <label htmlFor="hardwareBackground" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label className="text-sm font-semibold text-foreground mb-2.5 flex items-center gap-2">
+                  <Zap className="w-4 h-4 text-emerald-600" />
                   Hardware Background
                 </label>
                 <textarea
-                  id="hardwareBackground"
-                  name="hardwareBackground"
                   rows={4}
                   placeholder="e.g., Experience with Arduino, Raspberry Pi, robotics projects..."
                   value={formData.hardwareBackground}
-                  onChange={(e) => setFormData({ ...formData, hardwareBackground: e.target.value })}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      hardwareBackground: e.target.value,
+                    })
+                  }
+                  className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent dark:text-foreground placeholder-muted-foreground transition-all resize-none"
                 />
               </div>
-            </div>
 
-            <button
-              type="submit"
-              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              Continue
-            </button>
-          </form>
-        )}
-
-        {step === 2 && (
-          <form className="mt-8 space-y-6" onSubmit={handleCredentialsSubmit}>
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                Create your credentials
-              </h3>
+              <button
+                type="submit"
+                className="w-full bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-xl"
+              >
+                Continue <ArrowRight className="w-4 h-4" />
+              </button>
+            </form>
+          ) : (
+            <form className="space-y-6" onSubmit={handleCredentialsSubmit}>
+              <div>
+                <h2 className="text-xl font-bold text-foreground mb-2 flex items-center gap-2">
+                  <Lock className="w-5 h-5 text-emerald-600" />
+                  Create Your Credentials
+                </h2>
+              </div>
 
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label className="text-sm font-semibold text-foreground mb-2.5 flex items-center gap-2">
+                  <User className="w-4 h-4 text-muted-foreground" />
                   Full Name
                 </label>
                 <input
-                  id="name"
-                  name="name"
                   type="text"
                   required
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
+                  placeholder="John Doe"
+                  className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent dark:text-foreground placeholder-muted-foreground transition-all"
                 />
               </div>
 
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Email address
+                <label className="text-sm font-semibold text-foreground mb-2.5 flex items-center gap-2">
+                  <Mail className="w-4 h-4 text-muted-foreground" />
+                  Email Address
                 </label>
                 <input
-                  id="email"
-                  name="email"
                   type="email"
                   required
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
+                  placeholder="you@example.com"
+                  className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent dark:text-foreground placeholder-muted-foreground transition-all"
                 />
               </div>
 
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label className="text-sm font-semibold text-foreground mb-2.5 flex items-center gap-2">
+                  <Lock className="w-4 h-4 text-muted-foreground" />
                   Password
                 </label>
                 <input
-                  id="password"
-                  name="password"
                   type="password"
                   required
                   minLength={8}
                   value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                  onChange={(e) =>
+                    setFormData({ ...formData, password: e.target.value })
+                  }
+                  placeholder="••••••••"
+                  className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent dark:text-foreground placeholder-muted-foreground transition-all"
                 />
-                <p className="mt-1 text-xs text-gray-500">Must be at least 8 characters</p>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Minimum 8 characters
+                </p>
               </div>
-            </div>
 
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => setStep(1)}
-                className="flex-1 flex justify-center py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              >
-                Back
-              </button>
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? "Creating account..." : "Sign up"}
-              </button>
-            </div>
-
-            <div className="relative my-6">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setStep(1)}
+                  className="flex-1 px-4 py-3 bg-card border border-border text-foreground font-semibold rounded-xl hover:bg-accent transition-all"
+                >
+                  Back
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="flex-1 bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold py-3 rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
+                >
+                  {loading ? (
+                    "Creating..."
+                  ) : (
+                    <>
+                      Sign Up <ArrowRight className="w-4 h-4" />
+                    </>
+                  )}
+                </button>
               </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white dark:bg-gray-800 text-gray-500">Or sign up with</span>
+
+              <div className="flex items-center gap-4 my-8">
+                <div className="h-px bg-border flex-1" />
+                <span className="text-muted-foreground text-sm font-medium">
+                  Or sign up with
+                </span>
+                <div className="h-px bg-border flex-1" />
               </div>
-            </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => handleSocialSignup("google")}
-                disabled={loading}
-                className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50"
-              >
-                Google
-              </button>
-              <button
-                type="button"
-                onClick={() => handleSocialSignup("github")}
-                disabled={loading}
-                className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50"
-              >
-                GitHub
-              </button>
-            </div>
-          </form>
-        )}
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => handleSocialSignup("google")}
+                  disabled={loading}
+                  className="cursor-pointer flex items-center justify-center gap-2 px-4 py-3 bg-card border border-border rounded-xl hover:bg-accent transition-all disabled:opacity-50 font-medium text-foreground"
+                >
+                  <Chrome className="w-4 h-4" />
+                  Google
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSocialSignup("github")}
+                  disabled={loading}
+                  className="cursor-pointer flex items-center justify-center gap-2 px-4 py-3 bg-card border border-border rounded-xl hover:bg-accent transition-all disabled:opacity-50 font-medium text-foreground"
+                >
+                  <Github className="w-4 h-4" />
+                  GitHub
+                </button>
+              </div>
+            </form>
+          )}
 
-        <div className="text-center">
-          <a href="/login" className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400">
-            Already have an account? Sign in
-          </a>
+          {/* Footer Link */}
+          <p className="text-center text-muted-foreground">
+            Already have an account?{" "}
+            <Link
+              href="/login"
+              className="font-semibold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300 transition-colors"
+            >
+              Sign in
+            </Link>
+          </p>
         </div>
       </div>
+
+      {/* Right Section - Animated Background */}
+      <AnimatedRightSection
+        title="Start Your Robotics Journey"
+        subtitle="Join thousands of developers mastering physical AI and embodied intelligence"
+        type="signup"
+      />
     </div>
   );
 }

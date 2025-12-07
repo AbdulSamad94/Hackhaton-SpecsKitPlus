@@ -137,7 +137,7 @@ export default function OnboardingPage() {
             Complete Your Profile
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
-            Help us personalize your learning experience
+            Help us personalize your physical AI journey
           </p>
         </div>
 
