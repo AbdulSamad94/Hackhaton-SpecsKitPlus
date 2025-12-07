@@ -265,47 +265,22 @@ export default function ChatbotEnhanced() {
                     components={{
                       // Custom styling for markdown elements
                       h2: ({ node, ...props }) => (
-                        <h2
-                          style={{
-                            marginTop: "12px",
-                            marginBottom: "8px",
-                            fontSize: "1.1em",
-                            fontWeight: "bold",
-                          }}
-                          {...props}
-                        />
+                        <h2 className={styles.markdownH2} {...props} />
                       ),
                       h3: ({ node, ...props }) => (
-                        <h3
-                          style={{
-                            marginTop: "10px",
-                            marginBottom: "6px",
-                            fontSize: "1.05em",
-                            fontWeight: "bold",
-                          }}
-                          {...props}
-                        />
+                        <h3 className={styles.markdownH3} {...props} />
                       ),
                       p: ({ node, ...props }) => (
-                        <p
-                          style={{ marginBottom: "8px", lineHeight: "1.5" }}
-                          {...props}
-                        />
+                        <p className={styles.markdownP} {...props} />
                       ),
                       ul: ({ node, ...props }) => (
-                        <ul
-                          style={{ marginLeft: "16px", marginBottom: "8px" }}
-                          {...props}
-                        />
+                        <ul className={styles.markdownUl} {...props} />
                       ),
                       ol: ({ node, ...props }) => (
-                        <ol
-                          style={{ marginLeft: "16px", marginBottom: "8px" }}
-                          {...props}
-                        />
+                        <ol className={styles.markdownOl} {...props} />
                       ),
                       li: ({ node, ...props }) => (
-                        <li style={{ marginBottom: "4px" }} {...props} />
+                        <li className={styles.markdownLi} {...props} />
                       ),
                       code: ({
                         node,
@@ -321,33 +296,18 @@ export default function ChatbotEnhanced() {
                       }) =>
                         inline ? (
                           <code
-                            style={{
-                              backgroundColor: "rgba(0,0,0,0.1)",
-                              padding: "2px 4px",
-                              borderRadius: "3px",
-                              fontSize: "0.9em",
-                            }}
+                            className={styles.markdownCodeInline}
                             {...props}
                           >
                             {children}
                           </code>
                         ) : (
-                          <code
-                            style={{
-                              display: "block",
-                              backgroundColor: "rgba(0,0,0,0.1)",
-                              padding: "8px",
-                              borderRadius: "6px",
-                              overflowX: "auto",
-                              marginBottom: "8px",
-                            }}
-                            {...props}
-                          >
+                          <code className={styles.markdownCodeBlock} {...props}>
                             {children}
                           </code>
                         ),
                       strong: ({ node, ...props }) => (
-                        <strong style={{ fontWeight: "bold" }} {...props} />
+                        <strong className={styles.markdownStrong} {...props} />
                       ),
                     }}
                   >
