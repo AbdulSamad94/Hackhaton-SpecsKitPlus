@@ -1,10 +1,25 @@
-"use client"
+"use client";
 
-import type React from "react"
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { Mail, Code, Zap, LogOut, ArrowLeft, Edit2 } from "lucide-react";
+import Image from "next/image";
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { Mail, Code, Zap, LogOut, ArrowLeft, Edit2 } from "lucide-react"
+const handleLogout = async () => {
+  try {
+    await fetch("/api/auth/sign-out", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({}),
+      credentials: "include",
+    });
+    window.location.reload();
+  } catch (error) {
+    console.error("Logout failed:", error);
+  }
+};
 
 export default function ProfilePage() {
   const [formData, setFormData] = useState({
@@ -13,19 +28,19 @@ export default function ProfilePage() {
     softwareBackground: "",
     hardwareBackground: "",
     image: "",
-  })
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [message, setMessage] = useState({ type: "", text: "" })
-  const router = useRouter()
+  });
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState({ type: "", text: "" });
+  const router = useRouter();
 
   useEffect(() => {
     fetch("/api/auth/session", { credentials: "include" })
       .then((res) => res.json())
       .then((data) => {
         if (!data.user) {
-          router.push("/login")
-          return
+          router.push("/login");
+          return;
         }
         setFormData({
           name: data.user.name || "",
@@ -33,19 +48,22 @@ export default function ProfilePage() {
           softwareBackground: data.user.softwareBackground || "",
           hardwareBackground: data.user.hardwareBackground || "",
           image: data.user.image || "",
-        })
-        setLoading(false)
+        });
+        setLoading(false);
       })
-      .catch((err) => {
-        setMessage({ type: "error", text: "Failed to load profile data." })
-        setLoading(false)
-      })
-  }, [router])
+      .catch((err: unknown) => {
+        setMessage({
+          type: "error",
+          text: `Failed to load profile data ${err}.`,
+        });
+        setLoading(false);
+      });
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setSaving(true)
-    setMessage({ type: "", text: "" })
+    e.preventDefault();
+    setSaving(true);
+    setMessage({ type: "", text: "" });
 
     try {
       const response = await fetch("/api/auth/update-profile", {
@@ -56,27 +74,27 @@ export default function ProfilePage() {
           softwareBackground: formData.softwareBackground,
           hardwareBackground: formData.hardwareBackground,
         }),
-      })
+      });
 
-      if (!response.ok) throw new Error("Failed to update profile")
+      if (!response.ok) throw new Error("Failed to update profile");
 
-      setMessage({ type: "success", text: "Profile updated successfully!" })
-    } catch (err) {
-      setMessage({ type: "error", text: "Failed to save changes." })
+      setMessage({ type: "success", text: "Profile updated successfully!" });
+    } catch (err: unknown) {
+      setMessage({ type: "error", text: `Failed to save changes. ${err}` });
     } finally {
-      setSaving(false)
+      setSaving(false);
     }
-  }
+  };
 
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="relative">
-          <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-full blur-2xl opacity-20"></div>
+          <div className="absolute inset-0 bg-linear-to-r from-emerald-500 to-teal-600 rounded-full blur-2xl opacity-20"></div>
           <div className="relative animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent"></div>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -84,7 +102,9 @@ export default function ProfilePage() {
       <div className="max-w-5xl mx-auto">
         {/* Header Navigation */}
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-foreground">Profile Settings</h1>
+          <h1 className="text-3xl font-bold text-foreground">
+            Profile Settings
+          </h1>
           <button
             onClick={() => router.push("/docs")}
             className="flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-muted transition-colors font-medium"
@@ -100,7 +120,7 @@ export default function ProfilePage() {
           <div className="lg:col-span-1">
             <div className="bg-card border border-border rounded-2xl shadow-xl overflow-hidden sticky top-8">
               {/* Profile Banner with Animated Gradient */}
-              <div className="h-24 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 relative overflow-hidden">
+              <div className="h-24 bg-linear-to-r from-emerald-500 via-teal-500 to-emerald-600 relative overflow-hidden">
                 <div className="absolute inset-0 opacity-30">
                   <div className="absolute top-2 left-2 w-20 h-20 bg-white rounded-full blur-3xl"></div>
                   <div className="absolute bottom-1 right-1 w-16 h-16 bg-white rounded-full blur-3xl"></div>
@@ -111,17 +131,21 @@ export default function ProfilePage() {
               <div className="px-6 py-8 -mt-12 relative">
                 <div className="flex flex-col items-center text-center">
                   {formData.image ? (
-                    <img
+                    <Image
+                      width={96}
+                      height={96}
                       src={formData.image || "/placeholder.svg"}
                       alt={formData.name}
                       className="h-24 w-24 rounded-2xl border-4 border-card object-cover shadow-lg mb-4"
                     />
                   ) : (
-                    <div className="h-24 w-24 rounded-2xl border-4 border-card bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-4xl font-bold text-white shadow-lg mb-4">
+                    <div className="h-24 w-24 rounded-2xl border-4 border-card bg-linear-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-4xl font-bold text-white shadow-lg mb-4">
                       {formData.name?.charAt(0).toUpperCase()}
                     </div>
                   )}
-                  <h2 className="text-xl font-bold text-foreground text-balance">{formData.name}</h2>
+                  <h2 className="text-xl font-bold text-foreground text-balance">
+                    {formData.name}
+                  </h2>
                   <p className="text-muted-foreground flex items-center justify-center gap-1 mt-1 text-sm">
                     <Mail className="w-3 h-3" /> {formData.email}
                   </p>
@@ -129,7 +153,7 @@ export default function ProfilePage() {
                   {/* Action Buttons */}
                   <div className="w-full mt-6 space-y-2">
                     <button
-                      onClick={() => router.push("/logout")}
+                      onClick={handleLogout}
                       className="w-full flex items-center justify-center gap-2 px-4 py-2 text-destructive hover:bg-destructive/10 rounded-lg transition-colors font-medium text-sm"
                     >
                       <LogOut className="w-4 h-4" />
@@ -167,7 +191,8 @@ export default function ProfilePage() {
                       Customize Your Physical AI Experience
                     </h3>
                     <p className="text-muted-foreground text-sm">
-                      Tell us about your background to get personalized physical AI content
+                      Tell us about your background to get personalized physical
+                      AI content
                     </p>
                   </div>
                 </div>
@@ -190,7 +215,7 @@ export default function ProfilePage() {
               <form onSubmit={handleSubmit} className="space-y-8">
                 {/* Software Background */}
                 <div className="group">
-                  <label className="block text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                  <label className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
                     <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
                       <Code className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                     </div>
@@ -199,18 +224,24 @@ export default function ProfilePage() {
                   <textarea
                     rows={4}
                     value={formData.softwareBackground}
-                    onChange={(e) => setFormData({ ...formData, softwareBackground: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        softwareBackground: e.target.value,
+                      })
+                    }
                     className="w-full px-4 py-3 bg-input border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-foreground placeholder-muted-foreground transition-all resize-none focus:shadow-lg"
                     placeholder="Describe your coding experience and programming languages you know..."
                   />
                   <p className="mt-2 text-xs text-muted-foreground">
-                    This helps us tailor code examples and technical explanations to your skill level.
+                    This helps us tailor code examples and technical
+                    explanations to your skill level.
                   </p>
                 </div>
 
                 {/* Hardware Background */}
                 <div className="group">
-                  <label className="block text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                  <label className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
                     <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
                       <Zap className="w-4 h-4 text-purple-600 dark:text-purple-400" />
                     </div>
@@ -219,12 +250,18 @@ export default function ProfilePage() {
                   <textarea
                     rows={4}
                     value={formData.hardwareBackground}
-                    onChange={(e) => setFormData({ ...formData, hardwareBackground: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        hardwareBackground: e.target.value,
+                      })
+                    }
                     className="w-full px-4 py-3 bg-input border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-foreground placeholder-muted-foreground transition-all resize-none focus:shadow-lg"
                     placeholder="Describe your hardware, robotics, and electronics experience..."
                   />
                   <p className="mt-2 text-xs text-muted-foreground">
-                    We'll adjust how we explain physical components and electrical concepts based on your background.
+                    We&apos;ll adjust how we explain physical components and
+                    electrical concepts based on your background.
                   </p>
                 </div>
 
@@ -240,7 +277,7 @@ export default function ProfilePage() {
                   <button
                     type="submit"
                     disabled={saving}
-                    className="px-6 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold rounded-lg transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                    className="px-6 py-2.5 bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold rounded-lg transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                   >
                     {saving ? (
                       <span className="flex items-center gap-2">
@@ -258,5 +295,5 @@ export default function ProfilePage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

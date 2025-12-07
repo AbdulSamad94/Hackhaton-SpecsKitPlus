@@ -1,50 +1,49 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { authClient } from "@/lib/auth-client"
-import { Mail, Lock, Chrome, Github, ArrowRight, BookOpen } from "lucide-react"
-import Link from "next/link"
-import { AnimatedRightSection } from "@/components/auth/animated-right-section"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { authClient } from "@/lib/auth-client";
+import { Mail, Lock, Chrome, Github, ArrowRight, BookOpen } from "lucide-react";
+import Link from "next/link";
+import { AnimatedRightSection } from "@/components/auth/animated-right-section";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [error, setError] = useState("")
-  const [loading, setLoading] = useState(false)
-  const router = useRouter()
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const handleEmailLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError("")
-    setLoading(true)
+    e.preventDefault();
+    setError("");
+    setLoading(true);
 
     try {
       await authClient.signIn.email({
         email,
         password,
-      })
-      router.push("/docs")
-    } catch (err: any) {
-      setError(err.message || "Login failed")
+      });
+      router.push("/docs");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Login failed");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleSocialLogin = async (provider: "google" | "github") => {
-    setLoading(true)
+    setLoading(true);
     try {
       await authClient.signIn.social({
         provider,
         callbackURL: "/onboarding",
-      })
-    } catch (err: any) {
-      setError(err.message || "Social login failed")
-      setLoading(false)
+      });
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Social login failed");
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 gap-0">
@@ -53,16 +52,20 @@ export default function LoginPage() {
         <div className="w-full max-w-md space-y-8">
           {/* Logo */}
           <div className="flex items-center justify-start space-x-3">
-            <div className="p-2.5 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl shadow-lg">
+            <div className="p-2.5 bg-linear-to-br from-emerald-500 to-teal-600 rounded-xl shadow-lg">
               <BookOpen className="w-6 h-6 text-white" />
             </div>
-            <span className="text-xl font-bold text-foreground">Physical AI Hub</span>
+            <span className="text-xl font-bold text-foreground">
+              Physical AI Hub
+            </span>
           </div>
 
           {/* Header */}
           <div className="space-y-2">
             <h1 className="text-4xl font-bold text-foreground">Welcome Back</h1>
-            <p className="text-muted-foreground text-lg">Continue your journey in embodied intelligence</p>
+            <p className="text-muted-foreground text-lg">
+              Continue your journey in embodied intelligence
+            </p>
           </div>
 
           {/* Error Message */}
@@ -75,7 +78,9 @@ export default function LoginPage() {
           {/* Form */}
           <form className="space-y-5" onSubmit={handleEmailLogin}>
             <div>
-              <label className="block text-sm font-semibold text-foreground mb-2.5">Email Address</label>
+              <label className="block text-sm font-semibold text-foreground mb-2.5">
+                Email Address
+              </label>
               <div className="relative">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <input
@@ -90,7 +95,9 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-foreground mb-2.5">Password</label>
+              <label className="block text-sm font-semibold text-foreground mb-2.5">
+                Password
+              </label>
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <input
@@ -107,7 +114,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
+              className="w-full bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
             >
               {loading ? (
                 "Signing in..."
@@ -122,7 +129,9 @@ export default function LoginPage() {
           {/* Divider */}
           <div className="flex items-center gap-4 my-8">
             <div className="h-px bg-border bg-foreground flex-1" />
-            <span className="text-muted-foreground text-sm font-medium">Or continue with</span>
+            <span className="text-muted-foreground text-sm font-medium">
+              Or continue with
+            </span>
             <div className="h-px bg-border bg-foreground flex-1" />
           </div>
           {/* Social Buttons */}
@@ -149,7 +158,7 @@ export default function LoginPage() {
 
           {/* Footer Link */}
           <p className="text-center text-muted-foreground">
-            Don't have an account?{" "}
+            Don&lsquo;t have an account?{" "}
             <Link
               href="/signup"
               className="font-semibold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300 transition-colors"
@@ -167,5 +176,5 @@ export default function LoginPage() {
         type="login"
       />
     </div>
-  )
+  );
 }

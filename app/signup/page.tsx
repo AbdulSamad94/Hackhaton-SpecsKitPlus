@@ -1,72 +1,91 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { authClient } from "@/lib/auth-client"
-import { Mail, Lock, User, Code, Zap, Chrome, Github, ArrowRight, BookOpen } from "lucide-react"
-import Link from "next/link"
-import { AnimatedRightSection } from "@/components/auth/animated-right-section"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { authClient } from "@/lib/auth-client";
+import {
+  Mail,
+  Lock,
+  User,
+  Code,
+  Zap,
+  Chrome,
+  Github,
+  ArrowRight,
+  BookOpen,
+} from "lucide-react";
+import Link from "next/link";
+import { AnimatedRightSection } from "@/components/auth/animated-right-section";
 
 export default function SignupPage() {
-  const [step, setStep] = useState(1)
+  const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
     name: "",
     softwareBackground: "",
     hardwareBackground: "",
-  })
-  const [error, setError] = useState("")
-  const [loading, setLoading] = useState(false)
-  const router = useRouter()
+  });
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const handleBackgroundSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    setStep(2)
-  }
+    e.preventDefault();
+    setStep(2);
+  };
 
   const handleCredentialsSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError("")
-    setLoading(true)
+    e.preventDefault();
+    setError("");
+    setLoading(true);
 
     try {
+      // Store background data in session storage for later processing on the onboarding page
+      sessionStorage.setItem(
+        "pendingBackground",
+        JSON.stringify({
+          softwareBackground: formData.softwareBackground,
+          hardwareBackground: formData.hardwareBackground,
+        })
+      );
+
       await authClient.signUp.email({
         email: formData.email,
         password: formData.password,
         name: formData.name,
-        softwareBackground: formData.softwareBackground,
-        hardwareBackground: formData.hardwareBackground,
-      } as any)
-      router.push("/docs")
-    } catch (err: any) {
-      setError(err.message || "Signup failed")
+      });
+      // Redirect to onboarding to process the pending background data
+      router.push("/onboarding");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message || "Error" : "Signup failed");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleSocialSignup = async (provider: "google" | "github") => {
-    setLoading(true)
+    setLoading(true);
     try {
       sessionStorage.setItem(
         "pendingBackground",
         JSON.stringify({
           softwareBackground: formData.softwareBackground,
           hardwareBackground: formData.hardwareBackground,
-        }),
-      )
+        })
+      );
 
       await authClient.signIn.social({
         provider,
         callbackURL: "/onboarding",
-      })
-    } catch (err: any) {
-      setError(err.message || "Social signup failed")
-      setLoading(false)
+      });
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error ? err.message || "Error" : "Social signup failed"
+      );
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 gap-0">
@@ -75,15 +94,17 @@ export default function SignupPage() {
         <div className="w-full max-w-md space-y-8">
           {/* Logo */}
           <div className="flex items-center justify-start space-x-3">
-            <div className="p-2.5 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl shadow-lg">
+            <div className="p-2.5 bg-linear-to-br from-emerald-500 to-teal-600 rounded-xl shadow-lg">
               <BookOpen className="w-6 h-6 text-white" />
             </div>
-            <span className="text-xl font-bold text-foreground">Physical AI Hub</span>
+            <span className="text-xl font-bold text-foreground">
+              Physical AI Hub
+            </span>
           </div>
 
           {/* Header */}
           <div className="space-y-2">
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-400 dark:to-teal-400 bg-clip-text text-transparent">
+            <h1 className="text-4xl font-bold bg-linear-to-r from-emerald-600 to-teal-600 dark:from-emerald-400 dark:to-teal-400 bg-clip-text text-transparent">
               Join Us Today
             </h1>
             <p className="text-muted-foreground text-lg">Step {step} of 2</p>
@@ -104,11 +125,13 @@ export default function SignupPage() {
                   <Zap className="w-5 h-5 text-emerald-600" />
                   Tell Us About Yourself
                 </h2>
-                <p className="text-muted-foreground text-sm">This helps us personalize your learning experience</p>
+                <p className="text-muted-foreground text-sm">
+                  This helps us personalize your learning experience
+                </p>
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-foreground mb-2.5 flex items-center gap-2">
+                <label className="text-sm font-semibold text-foreground mb-2.5 flex items-center gap-2">
                   <Code className="w-4 h-4 text-emerald-600" />
                   Software Background
                 </label>
@@ -116,13 +139,18 @@ export default function SignupPage() {
                   rows={4}
                   placeholder="e.g., Python developer with 5 years experience, familiar with React and Node.js..."
                   value={formData.softwareBackground}
-                  onChange={(e) => setFormData({ ...formData, softwareBackground: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      softwareBackground: e.target.value,
+                    })
+                  }
                   className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent dark:text-foreground placeholder-muted-foreground transition-all resize-none"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-foreground mb-2.5 flex items-center gap-2">
+                <label className="text-sm font-semibold text-foreground mb-2.5 flex items-center gap-2">
                   <Zap className="w-4 h-4 text-emerald-600" />
                   Hardware Background
                 </label>
@@ -130,14 +158,19 @@ export default function SignupPage() {
                   rows={4}
                   placeholder="e.g., Experience with Arduino, Raspberry Pi, robotics projects..."
                   value={formData.hardwareBackground}
-                  onChange={(e) => setFormData({ ...formData, hardwareBackground: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      hardwareBackground: e.target.value,
+                    })
+                  }
                   className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent dark:text-foreground placeholder-muted-foreground transition-all resize-none"
                 />
               </div>
 
               <button
                 type="submit"
-                className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-xl"
+                className="w-full bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-xl"
               >
                 Continue <ArrowRight className="w-4 h-4" />
               </button>
@@ -152,7 +185,7 @@ export default function SignupPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-foreground mb-2.5 flex items-center gap-2">
+                <label className="text-sm font-semibold text-foreground mb-2.5 flex items-center gap-2">
                   <User className="w-4 h-4 text-muted-foreground" />
                   Full Name
                 </label>
@@ -160,14 +193,16 @@ export default function SignupPage() {
                   type="text"
                   required
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
                   placeholder="John Doe"
                   className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent dark:text-foreground placeholder-muted-foreground transition-all"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-foreground mb-2.5 flex items-center gap-2">
+                <label className="text-sm font-semibold text-foreground mb-2.5 flex items-center gap-2">
                   <Mail className="w-4 h-4 text-muted-foreground" />
                   Email Address
                 </label>
@@ -175,14 +210,16 @@ export default function SignupPage() {
                   type="email"
                   required
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
                   placeholder="you@example.com"
                   className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent dark:text-foreground placeholder-muted-foreground transition-all"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-foreground mb-2.5 flex items-center gap-2">
+                <label className="text-sm font-semibold text-foreground mb-2.5 flex items-center gap-2">
                   <Lock className="w-4 h-4 text-muted-foreground" />
                   Password
                 </label>
@@ -191,11 +228,15 @@ export default function SignupPage() {
                   required
                   minLength={8}
                   value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, password: e.target.value })
+                  }
                   placeholder="••••••••"
                   className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent dark:text-foreground placeholder-muted-foreground transition-all"
                 />
-                <p className="mt-2 text-xs text-muted-foreground">Minimum 8 characters</p>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Minimum 8 characters
+                </p>
               </div>
 
               <div className="flex gap-3">
@@ -209,7 +250,7 @@ export default function SignupPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold py-3 rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
+                  className="flex-1 bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold py-3 rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
                 >
                   {loading ? (
                     "Creating..."
@@ -223,7 +264,9 @@ export default function SignupPage() {
 
               <div className="flex items-center gap-4 my-8">
                 <div className="h-px bg-border flex-1" />
-                <span className="text-muted-foreground text-sm font-medium">Or sign up with</span>
+                <span className="text-muted-foreground text-sm font-medium">
+                  Or sign up with
+                </span>
                 <div className="h-px bg-border flex-1" />
               </div>
 
@@ -270,5 +313,5 @@ export default function SignupPage() {
         type="signup"
       />
     </div>
-  )
+  );
 }
