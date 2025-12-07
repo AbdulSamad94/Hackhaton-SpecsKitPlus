@@ -477,6 +477,56 @@
 
     .headerTitle {
         flex: 1 1 100%;
-        justify-content: center;
+        animation: fadein 0.2s ease-in;
+    }
+
+    /* Markdown Rendering Styles */
+    .markdownH2 {
+        margin-top: 12px;
+        margin-bottom: 8px;
+        font-size: 1.1em;
+        font-weight: bold;
+    }
+
+    .markdownH3 {
+        margin-top: 10px;
+        margin-bottom: 6px;
+        font-size: 1.05em;
+        font-weight: bold;
+    }
+
+    .markdownP {
+        margin-bottom: 8px;
+        line-height: 1.5;
+    }
+
+    .markdownUl,
+    .markdownOl {
+        margin-left: 16px;
+        margin-bottom: 8px;
+    }
+
+    .markdownLi {
+        margin-bottom: 4px;
+    }
+
+    .markdownCodeInline {
+        background-color: rgba(0, 0, 0, 0.1);
+        padding: 2px 4px;
+        border-radius: 3px;
+        font-size: 0.9em;
+    }
+
+    .markdownCodeBlock {
+        display: block;
+        background-color: rgba(0, 0, 0, 0.1);
+        padding: 8px;
+        border-radius: 6px;
+        overflow-x: auto;
+        margin-bottom: 8px;
+    }
+
+    .markdownStrong {
+        font-weight: bold;
     }
 }

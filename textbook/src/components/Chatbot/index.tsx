@@ -1,40 +1,49 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState, useRef, useEffect } from "react"
-import clsx from "clsx"
-import styles from "./styles.module.css"
-import { v4 as uuidv4 } from "uuid"
-import { SendHorizontal, BotMessageSquare, X, Quote, Trash2 } from "lucide-react"
-import useDocusaurusContext from "@docusaurus/useDocusaurusContext"
+import type React from "react";
+import { useState, useRef, useEffect } from "react";
+import clsx from "clsx";
+import styles from "./styles.module.css";
+import { v4 as uuidv4 } from "uuid";
+import {
+  SendHorizontal,
+  BotMessageSquare,
+  X,
+  Quote,
+  Trash2,
+  Bot,
+} from "lucide-react";
+import useDocusaurusContext from "@docusaurus/useDocusaurusContext";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
-type SizeOption = "small" | "medium" | "large"
+type SizeOption = "small" | "medium" | "large";
 
 interface Message {
-  id: string
-  text: string
-  sender: "user" | "bot"
-  timestamp: Date
+  id: string;
+  text: string;
+  sender: "user" | "bot";
+  timestamp: Date;
 }
 
 interface UserSession {
-  id: string
-  name: string
-  email: string
-  softwareBackground?: string
-  hardwareBackground?: string
+  id: string;
+  name: string;
+  email: string;
+  softwareBackground?: string;
+  hardwareBackground?: string;
 }
 
 export default function ChatbotEnhanced() {
-  const { siteConfig } = useDocusaurusContext()
-  const apiUrl = siteConfig.customFields?.apiUrl as string
+  const { siteConfig } = useDocusaurusContext();
+  const apiUrl = siteConfig.customFields?.apiUrl as string;
 
-  const [isOpen, setIsOpen] = useState(false)
-  const [inputValue, setInputValue] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const [selectedText, setSelectedText] = useState("")
-  const [userSession, setUserSession] = useState<UserSession | null>(null)
-  const [currentSize, setCurrentSize] = useState<SizeOption>("medium")
+  const [isOpen, setIsOpen] = useState(false);
+  const [inputValue, setInputValue] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [selectedText, setSelectedText] = useState("");
+  const [userSession, setUserSession] = useState<UserSession | null>(null);
+  const [currentSize, setCurrentSize] = useState<SizeOption>("medium");
   const [messages, setMessages] = useState<Message[]>([
     {
       id: uuidv4(),
@@ -42,78 +51,78 @@ export default function ChatbotEnhanced() {
       sender: "bot",
       timestamp: new Date(),
     },
-  ])
-  const messagesEndRef = useRef<HTMLDivElement>(null)
+  ]);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
   useEffect(() => {
-    scrollToBottom()
-  }, [messages, isOpen, selectedText])
+    scrollToBottom();
+  }, [messages, isOpen, selectedText]);
 
   useEffect(() => {
-    const controller = new AbortController()
-    const { signal } = controller
+    const controller = new AbortController();
+    const { signal } = controller;
 
     fetch("/api/auth/session", { credentials: "include", signal })
       .then((res) => res.json())
       .then((data) => {
         if (!signal.aborted && data.session && data.user) {
-          setUserSession(data.user)
+          setUserSession(data.user);
         }
       })
       .catch((err) => {
         if (err.name !== "AbortError") {
-          console.error("Chatbot session fetch error:", err)
+          console.error("Chatbot session fetch error:", err);
         }
-      })
+      });
 
-    return () => controller.abort()
-  }, [])
+    return () => controller.abort();
+  }, []);
 
   useEffect(() => {
     const handleSelection = () => {
-      const selection = window.getSelection()
+      const selection = window.getSelection();
       if (selection && selection.toString().trim().length > 0) {
-        const text = selection.toString().trim()
+        const text = selection.toString().trim();
         if (text.length >= 5) {
-          setSelectedText(text)
+          setSelectedText(text);
         }
       }
-    }
+    };
 
-    document.addEventListener("mouseup", handleSelection)
+    document.addEventListener("mouseup", handleSelection);
     return () => {
-      document.removeEventListener("mouseup", handleSelection)
-    }
-  }, [])
+      document.removeEventListener("mouseup", handleSelection);
+    };
+  }, []);
 
   const handleSend = async () => {
-    if (!inputValue.trim()) return
+    if (!inputValue.trim()) return;
 
-    const userMessage = inputValue.trim()
+    const userMessage = inputValue.trim();
 
     const newUserMessage: Message = {
       id: uuidv4(),
       text: userMessage,
       sender: "user",
       timestamp: new Date(),
-    }
+    };
 
-    setInputValue("")
-    setIsLoading(true)
+    setInputValue("");
+    setIsLoading(true);
 
-    setMessages((prev) => [...prev, newUserMessage])
+    setMessages((prev) => [...prev, newUserMessage]);
 
     try {
       const messageHistory = [...messages, newUserMessage].map((m) => ({
         role: m.sender,
         content: m.text,
-      }))
+      }));
 
-      let response
+      let response;
 
       if (selectedText) {
         response = await fetch(`${apiUrl}/api/ask-selection`, {
@@ -131,7 +140,7 @@ export default function ChatbotEnhanced() {
                 }
               : undefined,
           }),
-        })
+        });
       } else {
         response = await fetch(`${apiUrl}/api/chat`, {
           method: "POST",
@@ -148,48 +157,48 @@ export default function ChatbotEnhanced() {
                 }
               : undefined,
           }),
-        })
+        });
       }
 
-      setSelectedText("")
+      setSelectedText("");
 
       if (!response.ok) {
-        throw new Error("Failed to get response")
+        throw new Error("Failed to get response");
       }
 
-      const data = await response.json()
+      const data = await response.json();
 
       const botResponse: Message = {
         id: uuidv4(),
         text: data.answer,
         sender: "bot",
         timestamp: new Date(),
-      }
-      setMessages((prev) => [...prev, botResponse])
+      };
+      setMessages((prev) => [...prev, botResponse]);
     } catch (error) {
-      console.error("Error sending message:", error)
+      console.error("Error sending message:", error);
       const errorResponse: Message = {
         id: uuidv4(),
         text: "Sorry, I'm having trouble connecting to the server. Please try again later.",
         sender: "bot",
         timestamp: new Date(),
-      }
-      setMessages((prev) => [...prev, errorResponse])
+      };
+      setMessages((prev) => [...prev, errorResponse]);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault()
-      handleSend()
+      e.preventDefault();
+      handleSend();
     }
-  }
+  };
 
   const handleSizeChange = (newSize: SizeOption) => {
-    setCurrentSize(newSize)
-  }
+    setCurrentSize(newSize);
+  };
 
   return (
     <div className={styles.chatbotContainer}>
@@ -198,11 +207,17 @@ export default function ChatbotEnhanced() {
           {/* Header with Size Controls */}
           <div className={styles.header}>
             <div className={styles.headerTitle}>
-              <span>🤖</span> AI Assistant
+              <span>
+                <Bot size={24} />
+              </span>{" "}
+              AI Assistant
             </div>
             <div className={styles.sizeControls}>
               <button
-                className={clsx(styles.sizeButton, currentSize === "small" && styles.active)}
+                className={clsx(
+                  styles.sizeButton,
+                  currentSize === "small" && styles.active
+                )}
                 onClick={() => handleSizeChange("small")}
                 title="Small size"
                 aria-label="Small window"
@@ -210,7 +225,10 @@ export default function ChatbotEnhanced() {
                 S
               </button>
               <button
-                className={clsx(styles.sizeButton, currentSize === "medium" && styles.active)}
+                className={clsx(
+                  styles.sizeButton,
+                  currentSize === "medium" && styles.active
+                )}
                 onClick={() => handleSizeChange("medium")}
                 title="Medium size"
                 aria-label="Medium window"
@@ -218,7 +236,10 @@ export default function ChatbotEnhanced() {
                 M
               </button>
               <button
-                className={clsx(styles.sizeButton, currentSize === "large" && styles.active)}
+                className={clsx(
+                  styles.sizeButton,
+                  currentSize === "large" && styles.active
+                )}
                 onClick={() => handleSizeChange("large")}
                 title="Large size"
                 aria-label="Large window"
@@ -233,9 +254,68 @@ export default function ChatbotEnhanced() {
             {messages.map((msg) => (
               <div
                 key={msg.id}
-                className={clsx(styles.message, msg.sender === "user" ? styles.userMessage : styles.botMessage)}
+                className={clsx(
+                  styles.message,
+                  msg.sender === "user" ? styles.userMessage : styles.botMessage
+                )}
               >
-                {msg.text}
+                {msg.sender === "bot" ? (
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      // Custom styling for markdown elements
+                      h2: ({ node, ...props }) => (
+                        <h2 className={styles.markdownH2} {...props} />
+                      ),
+                      h3: ({ node, ...props }) => (
+                        <h3 className={styles.markdownH3} {...props} />
+                      ),
+                      p: ({ node, ...props }) => (
+                        <p className={styles.markdownP} {...props} />
+                      ),
+                      ul: ({ node, ...props }) => (
+                        <ul className={styles.markdownUl} {...props} />
+                      ),
+                      ol: ({ node, ...props }) => (
+                        <ol className={styles.markdownOl} {...props} />
+                      ),
+                      li: ({ node, ...props }) => (
+                        <li className={styles.markdownLi} {...props} />
+                      ),
+                      code: ({
+                        node,
+                        inline,
+                        className,
+                        children,
+                        ...props
+                      }: {
+                        node?: any;
+                        inline?: boolean;
+                        className?: string;
+                        children?: React.ReactNode;
+                      }) =>
+                        inline ? (
+                          <code
+                            className={styles.markdownCodeInline}
+                            {...props}
+                          >
+                            {children}
+                          </code>
+                        ) : (
+                          <code className={styles.markdownCodeBlock} {...props}>
+                            {children}
+                          </code>
+                        ),
+                      strong: ({ node, ...props }) => (
+                        <strong className={styles.markdownStrong} {...props} />
+                      ),
+                    }}
+                  >
+                    {msg.text}
+                  </ReactMarkdown>
+                ) : (
+                  msg.text
+                )}
                 <span className={styles.messageTime}>
                   {msg.timestamp.toLocaleTimeString([], {
                     hour: "2-digit",
@@ -270,7 +350,9 @@ export default function ChatbotEnhanced() {
                 </button>
               </div>
               <div className={styles.selectedContextContent}>
-                {selectedText.length > 100 ? `${selectedText.substring(0, 100)}...` : selectedText}
+                {selectedText.length > 100
+                  ? `${selectedText.substring(0, 100)}...`
+                  : selectedText}
               </div>
             </div>
           )}
@@ -299,9 +381,13 @@ export default function ChatbotEnhanced() {
       )}
 
       {/* Toggle Button */}
-      <button className={styles.toggleButton} onClick={() => setIsOpen(!isOpen)} aria-label="Toggle chat">
+      <button
+        className={styles.toggleButton}
+        onClick={() => setIsOpen(!isOpen)}
+        aria-label="Toggle chat"
+      >
         {isOpen ? <X size={24} /> : <BotMessageSquare size={24} />}
       </button>
     </div>
-  )
+  );
 }
