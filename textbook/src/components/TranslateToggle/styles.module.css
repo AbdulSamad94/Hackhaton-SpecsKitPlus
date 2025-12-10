@@ -1,0 +1,31 @@
+.translateButton {
+    background-color: transparent;
+    border: 1px solid var(--ifm-color-emphasis-300);
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ifm-color-content);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-left: 10px;
+}
+
+.translateButton:hover:not(:disabled) {
+    border-color: var(--ifm-color-primary);
+    background-color: var(--ifm-color-emphasis-200);
+}
+
+.translateButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+[data-theme='dark'] .translateButton {
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+[data-theme='dark'] .translateButton:hover:not(:disabled) {
+    border-color: var(--ifm-color-primary);
+    background-color: rgba(255, 255, 255, 0.05);
+}

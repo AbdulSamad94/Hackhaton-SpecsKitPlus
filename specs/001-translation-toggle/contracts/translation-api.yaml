@@ -1,0 +1,80 @@
+# API Contracts: Translation Toggle for Docusaurus Textbook
+
+**Feature**: Translation Toggle
+**Date**: 2025-12-10
+
+## Translation Service API
+
+### Translation Request
+**Endpoint**: `/api/translate` (simulated - would be external API like Google Translate)
+**Method**: POST
+**Content-Type**: application/json
+
+**Request**:
+```json
+{
+  "sourceLanguage": "ur",
+  "targetLanguage": "en",
+  "content": "Original content to translate",
+  "format": "text"
+}
+```
+
+**Response (Success)**:
+```json
+{
+  "translatedText": "Translated content",
+  "sourceLanguage": "ur",
+  "targetLanguage": "en",
+  "detectedSourceLanguage": "ur"
+}
+```
+
+**Response (Error)**:
+```json
+{
+  "error": {
+    "code": "translation_failed",
+    "message": "Translation service unavailable"
+  }
+}
+```
+
+### Validation Rules
+- `sourceLanguage` and `targetLanguage` must be valid language codes
+- `content` must not exceed 5000 characters per request
+- `format` must be one of ['text', 'html'] (html for preserving some formatting)
+
+## Client-Server Contracts (Local Storage)
+
+### Language Preference Storage
+**Key**: `translation.languagePreference`
+**Format**: JSON string
+
+**Structure**:
+```json
+{
+  "language": "ur",
+  "timestamp": "2025-12-10T10:00:00.000Z"
+}
+```
+
+### Translation Cache Storage
+**Key**: `translation.cache`
+**Format**: JSON string
+
+**Structure**:
+```json
+{
+  "entries": {
+    "unique-content-id": {
+      "source": "ur",
+      "target": "en",
+      "original": "original text",
+      "translated": "translated text",
+      "timestamp": "2025-12-10T10:00:00.000Z",
+      "expires": "2025-12-11T10:00:00.000Z"
+    }
+  }
+}
+```
