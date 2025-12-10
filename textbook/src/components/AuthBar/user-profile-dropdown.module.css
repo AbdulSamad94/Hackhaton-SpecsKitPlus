@@ -4,12 +4,16 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    margin-left: 16px;
+    /* Space from translation toggle */
 }
 
 .profileWrapper {
     position: relative;
     display: flex;
     align-items: center;
+    margin-left: 16px;
+    /* Space from translation toggle */
 }
 
 /* Profile Trigger Button */
@@ -86,8 +90,8 @@
 
 /* Login Button */
 .loginButton {
-    padding: 10px 20px;
-    background-color: #2d7d6c;
+    padding: 8px 16px;
+    background: linear-gradient(135deg, #2d7d6c 0%, #3fa385 100%);
     color: white;
     border: none;
     border-radius: 8px;
@@ -95,13 +99,19 @@
     font-size: 14px;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    box-shadow: 0 2px 8px rgba(45, 125, 108, 0.15);
+    box-shadow: 0 4px 12px rgba(45, 125, 108, 0.2);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
 }
 
 .loginButton:hover {
-    background-color: #245a4d;
+    background: linear-gradient(135deg, #245a4d 0%, #358c72 100%);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(45, 125, 108, 0.25);
+    box-shadow: 0 6px 16px rgba(45, 125, 108, 0.3);
+    color: white;
+    text-decoration: none;
 }
 
 /* Dropdown Menu */

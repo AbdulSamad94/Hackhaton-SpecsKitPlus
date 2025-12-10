@@ -14,7 +14,10 @@
       "Bash(powershell:*)",
       "Bash(git add:*)",
       "Bash(ls:*)",
-      "Bash(mkdir -p specs/001-auth-system/checklists)"
+      "Bash(mkdir -p specs/001-auth-system/checklists)",
+      "Bash(.specify/scripts/bash/create-new-feature.sh --json \"Build a language translation toggle feature for a Docusaurus-based educational textbook. The feature should:\nWHAT:\n- Add a language toggle button in the navigation bar\n- Allow users to switch between Urdu (default) and English\n- Translate the entire page content when toggled\n- Persist language preference across page navigation\n- Award bonus points (up to 50) when users first use the translation\nWHY:\n- Make the Physical AI & Humanoid Robotics textbook accessible to Urdu-speaking participants\n- Encourage engagement through bonus points\n- Provide seamless bilingual experience\n- Support learners who are more comfortable in Urdu\nUSER FLOW:\n1. User visits any page - content displays in Urdu by default\n2. User clicks language toggle button in navbar\n3. Page content translates to English without reload\n4. User receives notification about bonus points (first time only)\n5. Language preference persists when navigating to other pages\n6. User can toggle back to Urdu anytime\nCONSTRAINTS:\n- Must work with existing Docusaurus theme structure\n- Should match the current emerald/teal design theme\n- Must not break existing navbar components (AuthBar, etc.)\n- Should handle code blocks and technical terms appropriately\n- Bonus points backend integration required\" --number 1 --short-name \"translation-toggle\" \"Build a language translation toggle feature for a Docusaurus-based educational textbook\")",
+      "Bash(dir \"E:\\Abdul samad codes\\Hackhaton_Main\\Hackhaton_Prep\\my-website\\history\\prompts\\constitution\")",
+      "Bash(dir specs /ad)"
     ],
     "deny": [],
     "ask": []
