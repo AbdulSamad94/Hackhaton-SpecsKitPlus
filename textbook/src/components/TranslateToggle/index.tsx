@@ -1,22 +1,38 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { useLocation } from "@docusaurus/router";
 import styles from "./styles.module.css";
 
 const STORAGE_KEY = "translate-to-urdu";
-const SELECTOR_QUERY =
-  "h1, h2, h3, h4, h5, h6, p, li, a, span, td, th, label, button, .markdown";
+
+// Store original content
+const originalContent: Map<Element, string> = new Map();
 
 const TranslateToggle: React.FC = () => {
-  const [isUrdu, setIsUrdu] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem(STORAGE_KEY) === "true";
-    }
-    return false;
-  });
+  const [isUrdu, setIsUrdu] = useState(false);
   const location = useLocation();
-  const cancelRef = useRef(false);
-  const originalContentRef = useRef<Map<Element, string>>(new Map());
-  const observerRef = useRef<MutationObserver | null>(null);
+  const cancelRef = React.useRef(false);
+
+  // Reset state and translate on route change
+  useEffect(() => {
+    // Reset stored content for the new page
+    originalContent.clear();
+    const saved = localStorage.getItem(STORAGE_KEY);
+
+    // Stop any previous translation
+    cancelRef.current = true;
+
+    if (saved === "true") {
+      setIsUrdu(true);
+      // Wait for Docusaurus to swap content
+      setTimeout(() => {
+        cancelRef.current = false;
+        translateToUrdu();
+      }, 800);
+    } else {
+      setIsUrdu(false);
+      document.body.classList.remove("urdu-mode");
+    }
+  }, [location.pathname]);
 
   const translateText = async (text: string): Promise<string> => {
     try {
@@ -27,7 +43,7 @@ const TranslateToggle: React.FC = () => {
       const data = await response.json();
 
       if (data && data[0]) {
-        return data[0].map((item: [string]) => item[0]).join("");
+        return data[0].map((item: any) => item[0]).join("");
       }
     } catch (error) {
       console.error("Translation error:", error);
@@ -43,18 +59,20 @@ const TranslateToggle: React.FC = () => {
         document.querySelector("main") || document.querySelector("article");
       if (!main) return;
 
-      const elements = main.querySelectorAll(SELECTOR_QUERY);
+      const elements = main.querySelectorAll(
+        "h1, h2, h3, h4, h5, h6, p, li, a, span, td, th, label, button"
+      );
       const elementsToTranslate: Element[] = [];
 
       elements.forEach((el) => {
-        if (!originalContentRef.current.has(el)) {
+        if (!originalContent.has(el)) {
           const text = el.textContent?.trim();
           if (
             text &&
             text.length > 0 &&
             !el.closest("code, pre, script, style")
           ) {
-            originalContentRef.current.set(el, text);
+            originalContent.set(el, text);
             elementsToTranslate.push(el);
           }
         }
@@ -64,15 +82,21 @@ const TranslateToggle: React.FC = () => {
 
       const batchSize = 30;
       for (let i = 0; i < elementsToTranslate.length; i += batchSize) {
-        if (cancelRef.current) return;
+        // Check if cancelled
+        if (cancelRef.current) {
+          console.log("Translation cancelled");
+
+          return;
+        }
 
         const batch = elementsToTranslate.slice(i, i + batchSize);
 
         await Promise.all(
           batch.map(async (el) => {
+            // Double check cancellation inside loop
             if (cancelRef.current) return;
 
-            const originalText = originalContentRef.current.get(el) || "";
+            const originalText = originalContent.get(el) || "";
             const translatedText = await translateText(originalText);
 
             if (!cancelRef.current && el.textContent !== translatedText) {
@@ -87,86 +111,27 @@ const TranslateToggle: React.FC = () => {
       }
     } catch (error) {
       console.error("Translation failed:", error);
+    } finally {
     }
   };
-
-  // Reset state and translate on route change
-  useEffect(() => {
-    // Stop any previous translation
-    cancelRef.current = true;
-    if (observerRef.current) {
-      observerRef.current.disconnect();
-    }
-
-    // Clear content for new page only if we intend to translate fresh or if completely navigating away
-    // Actually, on route change, elements change, so we should always start fresh for the new page
-    originalContentRef.current.clear();
-
-    if (isUrdu) {
-      // Use MutationObserver to wait for content to be ready
-      const main =
-        document.querySelector("main") || document.querySelector("article");
-      if (main) {
-        // If content is already there (unlikely on route change but possible), try immediately
-        // But better to wait for stability using observer
-
-        let debounceTimer: NodeJS.Timeout;
-        const observer = new MutationObserver(() => {
-          clearTimeout(debounceTimer);
-          debounceTimer = setTimeout(() => {
-            // Content stabilized
-            observer.disconnect();
-            cancelRef.current = false;
-            translateToUrdu();
-          }, 500); // Wait 500ms after last mutation to ensure full load
-        });
-
-        observer.observe(main, { childList: true, subtree: true });
-        observerRef.current = observer;
-
-        // Fallback for safety if no mutations occur (already loaded)
-        setTimeout(() => {
-          if (originalContentRef.current.size === 0 && !cancelRef.current) {
-            translateToUrdu();
-            observer.disconnect();
-          }
-        }, 2000);
-      } else {
-        // Fallback if no main found initially
-        setTimeout(() => {
-          cancelRef.current = false;
-          translateToUrdu();
-        }, 1000);
-      }
-    } else {
-      document.body.classList.remove("urdu-mode");
-    }
-
-    return () => {
-      if (observerRef.current) observerRef.current.disconnect();
-      cancelRef.current = true;
-    };
-  }, [location.pathname]);
 
   const handleClick = async () => {
     if (isUrdu) {
       // Switch to English immediately
-      cancelRef.current = true;
-      if (observerRef.current) observerRef.current.disconnect();
-
+      cancelRef.current = true; // Stop any ongoing translation
       localStorage.setItem(STORAGE_KEY, "false");
       setIsUrdu(false);
+      // Force stop loading state
       document.body.classList.remove("urdu-mode");
 
       // Restore text from memory if available
-      if (originalContentRef.current.size > 0) {
-        originalContentRef.current.forEach((text, el) => {
+      if (originalContent.size > 0) {
+        originalContent.forEach((text, el) => {
           if (document.body.contains(el)) {
             el.textContent = text;
           }
         });
       } else {
-        // Recover cleanly if no stored content (unlikely, but safe fallback)
         window.location.reload();
       }
     } else {
@@ -181,8 +146,10 @@ const TranslateToggle: React.FC = () => {
     <button
       className={styles.translateButton}
       onClick={handleClick}
+      // Never disable the button so user can always cancel
       title={isUrdu ? "Switch to English" : "Translate to Urdu"}
     >
+      {/* Show EN/Aglo even if loading so user knows they can switch back */}
       {isUrdu ? "EN" : "اردو"}
     </button>
   );
